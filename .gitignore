@@ -51,3 +51,5 @@ htmlcov/
 .pip/
 .venv/
 venv/
+# Claude Code local config
+.claude/

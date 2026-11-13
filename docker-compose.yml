@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
@@ -27,11 +25,11 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/pathwise
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENROUTER_BASE_URL: https://openrouter.ai/api/v1
-      OPENROUTER_MODEL: google/gemma-4-26b-a4b
+      OPENROUTER_MODEL: google/gemma-4-26b-a4b-it
       APP_NAME: PathWise
       DEBUG: "true"
     ports:
-          - "8001:8000"
+      - "8001:8000"
     volumes:
       - ./backend:/app
     depends_on:
@@ -44,6 +42,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: pathwise-frontend
+    environment:
+      API_PROXY_TARGET: http://backend:8000
     ports:
       - "5173:5173"
     volumes:
@@ -51,7 +51,9 @@ services:
       - /app/node_modules
     depends_on:
       - backend
-    command: npm run dev -- --host 0.0.0.0
+    # node_modules lives in a container volume that outlives image rebuilds, so sync it with
+    # package.json on every start
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
 
 volumes:
   postgres_data:

@@ -6,12 +6,8 @@ import {
   Euro,
   Leaf,
   ArrowLeft,
-  Trophy,
   Sparkles,
   Zap,
-  TrendingDown,
-  ShieldCheck,
-  RotateCcw,
 } from 'lucide-react'
 
 const TRANSPORT_CONFIG = {
@@ -75,6 +71,19 @@ const METRICS = [
   },
 ]
 
+// The recommendation text marks emphasis as **bold**; render it instead of showing the asterisks
+function renderBold(line) {
+  return line.split('**').map((part, i) =>
+    i % 2 === 1 ? (
+      <strong key={i} className="font-semibold text-white">
+        {part}
+      </strong>
+    ) : (
+      part
+    )
+  )
+}
+
 export default function ComparisonResults({ comparison, onBack }) {
   const options = [
     { key: 'car', data: comparison.car },
@@ -128,7 +137,7 @@ export default function ComparisonResults({ comparison, onBack }) {
       {comparison.ai_recommendation && (
         <div className="bg-gradient-to-br from-emerald-900 via-slate-900 to-slate-950 text-white p-6 rounded-2xl shadow-xl border border-emerald-500/30 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-          
+
           <div className="relative z-10 flex items-start gap-4">
             <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-400 shrink-0">
               <Sparkles className="w-6 h-6 animate-pulse" />
@@ -147,7 +156,7 @@ export default function ComparisonResults({ comparison, onBack }) {
               <div className="text-slate-200 text-sm leading-relaxed space-y-1">
                 {comparison.ai_recommendation.split('\n').map((line, idx) => (
                   <p key={idx} className={line.startsWith('🏆') ? 'font-bold text-white text-base' : ''}>
-                    {line}
+                    {renderBold(line)}
                   </p>
                 ))}
               </div>

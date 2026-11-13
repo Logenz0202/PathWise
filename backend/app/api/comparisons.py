@@ -1,6 +1,8 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+
 from app.db.session import get_db
 from app.models.comparison import Comparison
 from app.schemas.comparison import (
@@ -10,22 +12,9 @@ from app.schemas.comparison import (
 )
 from app.services.calculator import calculate_comparison
 from app.services.eco_coach import eco_coach
-from app.services.geo import calculate_road_distance, CITY_LIST
+from app.services.geo import calculate_road_distance
 
 router = APIRouter(prefix="/api/comparisons", tags=["comparisons"])
-
-
-@router.get("/cities")
-def list_cities():
-    """List supported cities for the interactive map."""
-    return CITY_LIST
-
-
-@router.get("/distance")
-def get_distance(origin: str, destination: str):
-    """Calculate road distance in kilometers between two cities."""
-    distance = calculate_road_distance(origin, destination)
-    return {"origin": origin, "destination": destination, "distance_km": distance}
 
 
 @router.post("/", response_model=ComparisonResponse)
@@ -46,7 +35,7 @@ async def create_comparison(
         car_consumption_l_per_100km=request.car_consumption_l_per_100km,
         car_fuel_price_per_liter=request.car_fuel_price_per_liter,
     )
-    
+
     # Get AI recommendation
     ai_recommendation = await eco_coach.get_recommendation(
         origin=request.origin,
@@ -56,7 +45,7 @@ async def create_comparison(
         train=results["train"],
         bus=results["bus"],
     )
-    
+
     # Save to database
     comparison = Comparison(
         origin=request.origin,
@@ -76,11 +65,11 @@ async def create_comparison(
         bus_co2_kg=results["bus"].co2_kg,
         ai_recommendation=ai_recommendation,
     )
-    
+
     db.add(comparison)
     db.commit()
     db.refresh(comparison)
-    
+
     return comparison
 
 
@@ -116,7 +105,7 @@ def delete_comparison(
     comparison = db.query(Comparison).filter(Comparison.id == comparison_id).first()
     if not comparison:
         raise HTTPException(status_code=404, detail="Comparison not found")
-    
+
     db.delete(comparison)
     db.commit()
     return {"message": "Comparison deleted successfully"}

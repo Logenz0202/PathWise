@@ -2,7 +2,7 @@ import json
 import math
 import unicodedata
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 # Cities with 15k+ population in Poland and its neighbours (Germany, Czechia, Slovakia, Ukraine,
 # Belarus, Lithuania). Generated from GeoNames by scripts/build_cities.mjs; sorted by population.
@@ -70,6 +70,7 @@ KNOWN_ROAD_DISTANCES = {
     ("kyiv", "dnipro"): 480.0,
 }
 
+
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate the great circle distance in kilometers."""
     R = 6371.0
@@ -83,6 +84,7 @@ def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     )
     c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
     return R * c
+
 
 def calculate_road_distance(origin: str, destination: str) -> float:
     """Calculate realistic road driving distance in kilometers between two cities."""

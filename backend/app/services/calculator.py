@@ -1,4 +1,5 @@
 from typing import Optional
+
 from app.models.comparison import TransportMode
 from app.schemas.comparison import TransportOption
 
@@ -35,11 +36,11 @@ def calculate_car_costs(
     if not all([fuel_type, consumption_l_per_100km, fuel_price_per_liter]):
         # Default estimates
         return distance_km * 0.12, distance_km * EMISSION_FACTORS[TransportMode.CAR]
-    
+
     # Fuel consumption for the trip
     fuel_needed_l = (distance_km / 100) * consumption_l_per_100km
     cost = fuel_needed_l * fuel_price_per_liter
-    
+
     # CO2 varies by fuel type
     co2_per_liter = {
         "petrol": 2.31,
@@ -47,7 +48,7 @@ def calculate_car_costs(
         "lpg": 1.51,
         "electric": 0.0,  # Depends on grid, simplified
     }.get(fuel_type.lower(), 2.31)
-    
+
     co2_kg = fuel_needed_l * co2_per_liter
     return cost, co2_kg
 
@@ -62,7 +63,7 @@ def calculate_transport_option(
     """Calculate time, cost, and CO2 for a transport mode."""
     speed = AVERAGE_SPEEDS[mode]
     time_minutes = (distance_km / speed) * 60
-    
+
     if mode == TransportMode.CAR:
         cost, co2 = calculate_car_costs(
             distance_km, car_fuel_type, car_consumption_l_per_100km, car_fuel_price_per_liter
@@ -70,7 +71,7 @@ def calculate_transport_option(
     else:
         cost = distance_km * BASE_COSTS_PER_KM[mode]
         co2 = distance_km * EMISSION_FACTORS[mode]
-    
+
     return TransportOption(
         mode=mode,
         time_minutes=round(time_minutes, 1),
@@ -91,7 +92,7 @@ def calculate_comparison(
     )
     train = calculate_transport_option(TransportMode.TRAIN, distance_km)
     bus = calculate_transport_option(TransportMode.BUS, distance_km)
-    
+
     return {
         "car": car,
         "train": train,

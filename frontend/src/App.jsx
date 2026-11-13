@@ -7,7 +7,6 @@ import { useApi } from './hooks/useApi'
 import { calculateRoadDistance } from './utils/geoData'
 import {
   Compass,
-  MapPin,
   Car,
   Train,
   Bus,
@@ -15,7 +14,6 @@ import {
   History,
   Route,
   Leaf,
-  Layers,
 } from 'lucide-react'
 
 function App() {
@@ -45,7 +43,7 @@ function App() {
   // Handle Comparison submit from sidebar
   const handleCompareSubmit = async (payload) => {
     try {
-      const result = await post('/api/comparisons/', payload)
+      const result = await post('/comparisons/', payload)
       setLastComparison(result)
       setActiveTab('results')
     } catch (err) {
@@ -147,13 +145,9 @@ function App() {
               onCompare={handleCompareSubmit}
               loading={loading}
               error={error}
-              lastComparison={lastComparison}
-              onViewResults={() => setActiveTab('results')}
-              activeTab="compare"
-              onTabChange={(tab) => {
-                if (tab === 'history') setActiveTab('history')
-                if (tab === 'results' && lastComparison) setActiveTab('results')
-              }}
+              hasResults={Boolean(lastComparison)}
+              onShowResults={() => setActiveTab('results')}
+              onShowHistory={() => setActiveTab('history')}
             />
 
             {/* Focal Point: Interactive Map Component */}
@@ -183,7 +177,7 @@ function App() {
           <div className="bg-white text-slate-900 rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-200">
             <HistoryList
               onViewComparison={handleViewHistorical}
-              onSwitchToResults={() => setActiveTab('results')}
+              onStartComparing={() => setActiveTab('planner')}
             />
           </div>
         )}

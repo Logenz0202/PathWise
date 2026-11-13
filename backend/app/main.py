@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api import comparisons, geo
 from app.core.config import settings
-from app.api import comparisons
-from app.db.session import engine, Base
-from app.models import comparison  # noqa: F401
+from app.db.session import Base, engine
+from app.models import comparison  # noqa: F401  (registers the table on Base)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -26,6 +27,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(comparisons.router)
+app.include_router(geo.router)
 
 
 @app.get("/")

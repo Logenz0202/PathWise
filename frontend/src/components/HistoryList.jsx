@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useApi } from '../hooks/useApi'
-import { Car, Train, Bus, Clock, Euro, Leaf, Trash2, Eye, ChevronRight, ArrowLeft } from 'lucide-react'
+import { Car, Train, Bus, Clock, Trash2, Eye } from 'lucide-react'
 
 function formatTimeAgo(dateStr) {
   if (!dateStr) return ''
@@ -22,8 +22,8 @@ const TRANSPORT_CONFIG = {
   bus: { icon: Bus, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Bus' },
 }
 
-export default function HistoryList({ onViewComparison, onSwitchToResults }) {
-  const { get, loading, error } = useApi()
+export default function HistoryList({ onViewComparison, onStartComparing }) {
+  const { get, delete: del, loading, error } = useApi()
   const [comparisons, setComparisons] = useState([])
   const [deletingId, setDeletingId] = useState(null)
 
@@ -33,7 +33,7 @@ export default function HistoryList({ onViewComparison, onSwitchToResults }) {
 
   const loadHistory = async () => {
     try {
-      const data = await get('/api/comparisons/')
+      const data = await get('/comparisons/')
       setComparisons(data)
     } catch (err) {
       console.error('Failed to load history:', err)
@@ -42,10 +42,10 @@ export default function HistoryList({ onViewComparison, onSwitchToResults }) {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this comparison?')) return
-    
+
     setDeletingId(id)
     try {
-      await fetch(`/api/comparisons/${id}`, { method: 'DELETE' })
+      await del(`/comparisons/${id}`)
       setComparisons(prev => prev.filter(c => c.id !== id))
     } catch (err) {
       console.error('Failed to delete:', err)
@@ -55,12 +55,13 @@ export default function HistoryList({ onViewComparison, onSwitchToResults }) {
     }
   }
 
-  const handleView = (comparison) => {
-    // Fetch full comparison details
-    get(`/api/comparisons/${comparison.id}`).then(fullComparison => {
-      onViewComparison(fullComparison)
-      onSwitchToResults()
-    })
+  // The list only holds summaries; fetch the full comparison (incl. AI recommendation) to show it
+  const handleView = async (comparison) => {
+    try {
+      onViewComparison(await get(`/comparisons/${comparison.id}`))
+    } catch (err) {
+      console.error('Failed to load comparison:', err)
+    }
   }
 
   if (loading && comparisons.length === 0) {
@@ -80,8 +81,8 @@ export default function HistoryList({ onViewComparison, onSwitchToResults }) {
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">No comparisons yet</h3>
         <p className="text-gray-500 mb-6">Start by comparing your first trip!</p>
-        <button 
-          onClick={() => onSwitchToResults?.()}
+        <button
+          onClick={onStartComparing}
           className="btn-primary"
         >
           Compare Now
@@ -105,8 +106,8 @@ export default function HistoryList({ onViewComparison, onSwitchToResults }) {
 
       <div className="space-y-3">
         {comparisons.map((comparison) => (
-          <div 
-            key={comparison.id} 
+          <div
+            key={comparison.id}
             className="card p-4 hover:shadow-md transition-shadow group"
           >
             <div className="flex items-start justify-between gap-4">
@@ -126,7 +127,7 @@ export default function HistoryList({ onViewComparison, onSwitchToResults }) {
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={() => handleView(comparison)}
@@ -155,12 +156,9 @@ export default function HistoryList({ onViewComparison, onSwitchToResults }) {
               <div className="flex items-center gap-3 overflow-x-auto pb-2">
                 {['car', 'train', 'bus'].map((key) => {
                   const config = TRANSPORT_CONFIG[key]
-                  const time = comparison[`${key}_time_minutes`]
-                  const cost = comparison[`${key}_cost_eur`]
-                  const co2 = comparison[`${key}_co2_kg`]
-                  
-                  if (time == null) return null
-                  
+                  const option = comparison[key]
+                  if (!option) return null
+
                   const Icon = config.icon
                   return (
                     <div key={key} className={`flex items-center gap-2 px-3 py-2 rounded-lg ${config.bg} whitespace-nowrap flex-shrink-0`}>
@@ -168,7 +166,7 @@ export default function HistoryList({ onViewComparison, onSwitchToResults }) {
                       <div className="text-xs">
                         <p className="font-medium text-gray-900">{config.label}</p>
                         <p className="text-gray-500">
-                          {Math.round(time)} min · €{cost?.toFixed(2)} · {co2?.toFixed(1)} kg CO₂
+                          {Math.round(option.time_minutes)} min · €{option.cost_eur.toFixed(2)} · {option.co2_kg.toFixed(1)} kg CO₂
                         </p>
                       </div>
                     </div>

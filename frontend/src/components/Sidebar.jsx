@@ -36,10 +36,9 @@ export default function Sidebar({
   onCompare,
   loading,
   error,
-  lastComparison,
-  onViewResults,
-  activeTab,
-  onTabChange,
+  hasResults,
+  onShowResults,
+  onShowHistory,
 }) {
   const [showCarDetails, setShowCarDetails] = useState(false)
   const [showManualDistance, setShowManualDistance] = useState(false)
@@ -123,9 +122,9 @@ export default function Sidebar({
             </div>
           </div>
 
-          {lastComparison && (
+          {hasResults && (
             <button
-              onClick={() => onTabChange('results')}
+              onClick={onShowResults}
               className="text-xs px-2.5 py-1 bg-primary-600 hover:bg-primary-500 rounded-lg font-medium transition-colors flex items-center gap-1 shadow-sm"
             >
               <span>View Results</span>
@@ -136,23 +135,16 @@ export default function Sidebar({
         {/* View Toggle Tabs */}
         <div className="flex p-1 bg-slate-950/60 rounded-xl text-xs font-medium">
           <button
-            onClick={() => onTabChange('compare')}
-            className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'compare'
-                ? 'bg-primary-600 text-white shadow-sm font-semibold'
-                : 'text-slate-400 hover:text-white'
-            }`}
+            type="button"
+            className="flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 bg-primary-600 text-white shadow-sm font-semibold"
           >
             <Route className="w-3.5 h-3.5" />
             <span>Route Setup</span>
           </button>
           <button
-            onClick={() => onTabChange('history')}
-            className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'history'
-                ? 'bg-primary-600 text-white shadow-sm font-semibold'
-                : 'text-slate-400 hover:text-white'
-            }`}
+            type="button"
+            onClick={onShowHistory}
+            className="flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-white"
           >
             <History className="w-3.5 h-3.5" />
             <span>Trip History</span>

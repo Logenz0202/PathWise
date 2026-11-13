@@ -7,10 +7,25 @@ A modern **Full-Stack MVP** application. PathWise allows users to comprehensivel
 The project is split into independent layers and orchestrated via containerization (Docker + PostgreSQL):
 
 ```text
-pathwise/
-├── backend/            # Python + FastAPI + SQLAlchemy
-├── frontend/           # React + Vite + Tailwind CSS
-├── docker-compose.yml  # Full application orchestration (DB + BE + FE)
+PathWise/
+├── backend/                # Python + FastAPI + SQLAlchemy
+│   └── app/
+│       ├── api/            # HTTP routes (comparisons, geo)
+│       ├── core/           # Settings
+│       ├── data/           # Generated city list (cities.json)
+│       ├── db/             # Database session
+│       ├── models/         # SQLAlchemy models
+│       ├── schemas/        # Request / response schemas
+│       └── services/       # Calculator, AI Eco-Coach, geo lookups
+├── frontend/               # React + Vite + Tailwind CSS + Leaflet
+│   └── src/
+│       ├── components/     # Map, sidebar, results, history
+│       ├── data/           # Generated city list (cities.json)
+│       ├── hooks/          # API client hook
+│       ├── styles/
+│       └── utils/          # City search and distance helpers
+├── scripts/                # build_cities.mjs (regenerates the city lists)
+├── docker-compose.yml      # Full application orchestration (DB + BE + FE)
 └── README.md
 ```
 
@@ -43,7 +58,7 @@ docker compose up --build
 
 That's it! Docker will automatically spin up:
 * **Database (PostgreSQL):** Running on port `5432`
-* **Backend (FastAPI):** Available at `http://localhost:8000` (Swagger Docs: `http://localhost:8000/docs`)
+* **Backend (FastAPI):** Available at `http://localhost:8001` (Swagger Docs: `http://localhost:8001/docs`)
 * **Frontend (React + Vite):** Available at `http://localhost:5173`
 
 ## 🗺️ Roadmap / Future Features

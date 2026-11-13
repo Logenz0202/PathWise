@@ -7,7 +7,7 @@ from app.models.comparison import TransportMode
 class ComparisonRequest(BaseModel):
     origin: str = Field(..., description="Starting city")
     destination: str = Field(..., description="Destination city")
-    distance_km: float = Field(..., gt=0, description="Distance in kilometers")
+    distance_km: Optional[float] = Field(None, gt=0, description="Distance in kilometers (auto-calculated if omitted)")
     
     # Car configuration
     car_fuel_type: Optional[str] = Field(None, description="Fuel type: petrol, diesel, lpg, electric")

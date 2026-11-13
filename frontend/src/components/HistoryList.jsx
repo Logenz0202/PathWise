@@ -1,7 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useApi } from '../hooks/useApi'
-import { Car, Train, Bus, Clock, Euro, Leaf, Trash2, Eye, ChevronRight } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
+import { Car, Train, Bus, Clock, Euro, Leaf, Trash2, Eye, ChevronRight, ArrowLeft } from 'lucide-react'
+
+function formatTimeAgo(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffSec = Math.floor((now - date) / 1000)
+  if (diffSec < 60) return 'just now'
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) return `${diffHr}h ago`
+  const diffDays = Math.floor(diffHr / 24)
+  return `${diffDays}d ago`
+}
 
 const TRANSPORT_CONFIG = {
   car: { icon: Car, color: 'text-blue-600', bg: 'bg-blue-50', label: 'Car' },
@@ -109,7 +122,7 @@ export default function HistoryList({ onViewComparison, onSwitchToResults }) {
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" />
-                    {formatDistanceToNow(new Date(comparison.created_at), { addSuffix: true })}
+                    {formatTimeAgo(comparison.created_at)}
                   </span>
                 </div>
               </div>

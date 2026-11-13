@@ -1,93 +1,215 @@
 import { useState } from 'react'
-import ComparisonForm from './components/ComparisonForm'
+import InteractiveMap from './components/InteractiveMap'
+import Sidebar from './components/Sidebar'
 import ComparisonResults from './components/ComparisonResults'
 import HistoryList from './components/HistoryList'
-import { Car, Train, Bus, Leaf, Clock, Euro, History } from 'lucide-react'
+import { useApi } from './hooks/useApi'
+import { calculateRoadDistance } from './utils/geoData'
+import {
+  Compass,
+  MapPin,
+  Car,
+  Train,
+  Bus,
+  Sparkles,
+  History,
+  Route,
+  Leaf,
+  Layers,
+} from 'lucide-react'
 
 function App() {
-  const [activeTab, setActiveTab] = useState('compare')
+  const [activeTab, setActiveTab] = useState('planner') // 'planner' | 'results' | 'history'
+  const [originCity, setOriginCity] = useState('Warsaw')
+  const [destinationCity, setDestinationCity] = useState('Berlin')
   const [lastComparison, setLastComparison] = useState(null)
 
-  const handleComparisonComplete = (comparison) => {
+  const { post, loading, error } = useApi()
+
+  // Calculate current road distance
+  const currentDistance = calculateRoadDistance(originCity, destinationCity)
+
+  // Handle swapping origin & destination
+  const handleSwapCities = () => {
+    const temp = originCity
+    setOriginCity(destinationCity)
+    setDestinationCity(temp)
+  }
+
+  // Handle quick route preset selection
+  const handleQuickRouteSelect = (origin, dest) => {
+    setOriginCity(origin)
+    setDestinationCity(dest)
+  }
+
+  // Handle Comparison submit from sidebar
+  const handleCompareSubmit = async (payload) => {
+    try {
+      const result = await post('/api/comparisons/', payload)
+      setLastComparison(result)
+      setActiveTab('results')
+    } catch (err) {
+      console.error('Comparison error:', err)
+    }
+  }
+
+  // Handle viewing a historical item
+  const handleViewHistorical = (comparison) => {
     setLastComparison(comparison)
+    setOriginCity(comparison.origin)
+    setDestinationCity(comparison.destination)
     setActiveTab('results')
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-primary-500 selection:text-white">
+      {/* Top Header */}
+      <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-600 rounded-lg">
-                <Leaf className="w-6 h-6 text-white" />
+            {/* Logo */}
+            <div
+              onClick={() => setActiveTab('planner')}
+              className="flex items-center gap-3 cursor-pointer group"
+            >
+              <div className="p-2.5 bg-gradient-to-tr from-emerald-600 via-primary-600 to-indigo-600 rounded-xl shadow-lg shadow-primary-500/20 group-hover:scale-105 transition-transform">
+                <Leaf className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900">PathWise</h1>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h1 className="text-xl font-black text-white tracking-tight">PathWise</h1>
+                  <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary-500/20 text-primary-400 border border-primary-500/30 rounded-md">
+                    2.0
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 hidden sm:block">
+                  Smart European Transport & Eco Route Planner
+                </p>
+              </div>
             </div>
-            
-            <nav className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+
+            {/* Nav Tabs */}
+            <nav className="flex items-center gap-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 text-xs font-semibold">
               <button
-                onClick={() => setActiveTab('compare')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === 'compare'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                onClick={() => setActiveTab('planner')}
+                className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeTab === 'planner'
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
               >
-                Compare
+                <Compass className="w-4 h-4" />
+                <span>Interactive Map</span>
               </button>
+
+              {lastComparison && (
+                <button
+                  onClick={() => setActiveTab('results')}
+                  className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                    activeTab === 'results'
+                      ? 'bg-primary-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 text-emerald-400" />
+                  <span>Results</span>
+                </button>
+              )}
+
               <button
                 onClick={() => setActiveTab('history')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   activeTab === 'history'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
               >
-                History
+                <History className="w-4 h-4" />
+                <span>History</span>
               </button>
             </nav>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'compare' && (
-          <ComparisonForm onComplete={handleComparisonComplete} />
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* TAB 1: INTERACTIVE MAP & ROUTE PLANNER (FOCAL POINT) */}
+        {activeTab === 'planner' && (
+          <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+            {/* Sidebar Controls */}
+            <Sidebar
+              originCity={originCity}
+              destinationCity={destinationCity}
+              onOriginChange={setOriginCity}
+              onDestinationChange={setDestinationCity}
+              onSwapCities={handleSwapCities}
+              onCompare={handleCompareSubmit}
+              loading={loading}
+              error={error}
+              lastComparison={lastComparison}
+              onViewResults={() => setActiveTab('results')}
+              activeTab="compare"
+              onTabChange={(tab) => {
+                if (tab === 'history') setActiveTab('history')
+                if (tab === 'results' && lastComparison) setActiveTab('results')
+              }}
+            />
+
+            {/* Focal Point: Interactive Map Component */}
+            <div className="flex-1 flex flex-col min-w-0">
+              <InteractiveMap
+                originCity={originCity}
+                destinationCity={destinationCity}
+                onSelectOrigin={setOriginCity}
+                onSelectDestination={setDestinationCity}
+                onQuickRouteSelect={handleQuickRouteSelect}
+                calculatedDistance={currentDistance}
+              />
+            </div>
+          </div>
         )}
-        
+
+        {/* TAB 2: DETAILED COMPARISON RESULTS */}
         {activeTab === 'results' && lastComparison && (
-          <ComparisonResults 
-            comparison={lastComparison} 
-            onBack={() => setActiveTab('compare')} 
+          <ComparisonResults
+            comparison={lastComparison}
+            onBack={() => setActiveTab('planner')}
           />
         )}
-        
+
+        {/* TAB 3: SAVED HISTORY */}
         {activeTab === 'history' && (
-          <HistoryList onViewComparison={setLastComparison} onSwitchToResults={() => setActiveTab('results')} />
+          <div className="bg-white text-slate-900 rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-200">
+            <HistoryList
+              onViewComparison={handleViewHistorical}
+              onSwitchToResults={() => setActiveTab('results')}
+            />
+          </div>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-            <p>PathWise - Smart Transport Comparison & Planner</p>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-1">
-                <Car className="w-4 h-4" />
-                <span>Car</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Train className="w-4 h-4" />
-                <span>Train</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Bus className="w-4 h-4" />
-                <span>Bus</span>
-              </div>
+      {/* Global Modern Footer */}
+      <footer className="bg-slate-950 border-t border-slate-800 py-6 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-400">PathWise</span>
+            <span>—</span>
+            <span>Next-Gen Sustainable European Transit Routing</span>
+          </div>
+
+          <div className="flex items-center gap-6 text-slate-400 font-medium">
+            <div className="flex items-center gap-1.5 hover:text-blue-400 transition-colors">
+              <Car className="w-4 h-4 text-blue-500" />
+              <span>Car Route Engine</span>
+            </div>
+            <div className="flex items-center gap-1.5 hover:text-red-400 transition-colors">
+              <Train className="w-4 h-4 text-red-500" />
+              <span>Rail Transit</span>
+            </div>
+            <div className="flex items-center gap-1.5 hover:text-amber-400 transition-colors">
+              <Bus className="w-4 h-4 text-amber-500" />
+              <span>Intercity Bus</span>
             </div>
           </div>
         </div>

@@ -10,8 +10,26 @@ from app.schemas.comparison import (
 )
 from app.services.calculator import calculate_comparison
 from app.services.eco_coach import eco_coach
+from app.services.geo import calculate_road_distance, CITIES
 
 router = APIRouter(prefix="/api/comparisons", tags=["comparisons"])
+
+
+@router.get("/cities")
+def list_cities():
+    """List supported cities for the interactive map."""
+    unique_cities = {}
+    for city in CITIES.values():
+        if city["name"] not in unique_cities:
+            unique_cities[city["name"]] = city
+    return list(unique_cities.values())
+
+
+@router.get("/distance")
+def get_distance(origin: str, destination: str):
+    """Calculate road distance in kilometers between two cities."""
+    distance = calculate_road_distance(origin, destination)
+    return {"origin": origin, "destination": destination, "distance_km": distance}
 
 
 @router.post("/", response_model=ComparisonResponse)
@@ -20,9 +38,14 @@ async def create_comparison(
     db: Session = Depends(get_db)
 ):
     """Create a new transport comparison."""
+    # Determine distance (auto-calculate if not provided)
+    distance_km = request.distance_km
+    if distance_km is None or distance_km <= 0:
+        distance_km = calculate_road_distance(request.origin, request.destination)
+
     # Calculate all options
     results = calculate_comparison(
-        distance_km=request.distance_km,
+        distance_km=distance_km,
         car_fuel_type=request.car_fuel_type,
         car_consumption_l_per_100km=request.car_consumption_l_per_100km,
         car_fuel_price_per_liter=request.car_fuel_price_per_liter,
@@ -32,7 +55,7 @@ async def create_comparison(
     ai_recommendation = await eco_coach.get_recommendation(
         origin=request.origin,
         destination=request.destination,
-        distance_km=request.distance_km,
+        distance_km=distance_km,
         car=results["car"],
         train=results["train"],
         bus=results["bus"],
@@ -42,7 +65,7 @@ async def create_comparison(
     comparison = Comparison(
         origin=request.origin,
         destination=request.destination,
-        distance_km=request.distance_km,
+        distance_km=distance_km,
         car_fuel_type=request.car_fuel_type,
         car_consumption_l_per_100km=request.car_consumption_l_per_100km,
         car_fuel_price_per_liter=request.car_fuel_price_per_liter,

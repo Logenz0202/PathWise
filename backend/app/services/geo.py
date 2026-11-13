@@ -1,7 +1,7 @@
 import math
 from typing import Optional, Tuple
 
-# Major cities in Central Europe around Poland
+# Major cities in Poland and all its neighbours (Germany, Czechia, Slovakia, Ukraine, Belarus, Lithuania)
 CITIES = {
     # Poland
     "warsaw": {"name": "Warsaw", "country": "Poland", "code": "PL", "lat": 52.2297, "lng": 21.0122},
@@ -23,27 +23,28 @@ CITIES = {
     "białystok": {"name": "Białystok", "country": "Poland", "code": "PL", "lat": 53.1325, "lng": 23.1688},
     "rzeszow": {"name": "Rzeszów", "country": "Poland", "code": "PL", "lat": 50.0412, "lng": 21.9991},
     "rzeszów": {"name": "Rzeszów", "country": "Poland", "code": "PL", "lat": 50.0412, "lng": 21.9991},
-    "torun": {"name": "Toruń", "country": "Poland", "code": "PL", "lat": 53.0138, "lng": 18.5984},
-    "toruń": {"name": "Toruń", "country": "Poland", "code": "PL", "lat": 53.0138, "lng": 18.5984},
 
     # Germany
     "berlin": {"name": "Berlin", "country": "Germany", "code": "DE", "lat": 52.5200, "lng": 13.4050},
-    "dresden": {"name": "Dresden", "country": "Germany", "code": "DE", "lat": 51.0504, "lng": 13.7373},
-    "leipzig": {"name": "Leipzig", "country": "Germany", "code": "DE", "lat": 51.3397, "lng": 12.3731},
+    "hamburg": {"name": "Hamburg", "country": "Germany", "code": "DE", "lat": 53.5511, "lng": 9.9937},
     "munich": {"name": "Munich", "country": "Germany", "code": "DE", "lat": 48.1351, "lng": 11.5820},
     "münchen": {"name": "Munich", "country": "Germany", "code": "DE", "lat": 48.1351, "lng": 11.5820},
-    "hamburg": {"name": "Hamburg", "country": "Germany", "code": "DE", "lat": 53.5511, "lng": 9.9937},
+    "cologne": {"name": "Cologne", "country": "Germany", "code": "DE", "lat": 50.9375, "lng": 6.9603},
+    "köln": {"name": "Cologne", "country": "Germany", "code": "DE", "lat": 50.9375, "lng": 6.9603},
     "frankfurt": {"name": "Frankfurt", "country": "Germany", "code": "DE", "lat": 50.1109, "lng": 8.6821},
+    "stuttgart": {"name": "Stuttgart", "country": "Germany", "code": "DE", "lat": 48.7758, "lng": 9.1829},
+    "leipzig": {"name": "Leipzig", "country": "Germany", "code": "DE", "lat": 51.3397, "lng": 12.3731},
+    "dresden": {"name": "Dresden", "country": "Germany", "code": "DE", "lat": 51.0504, "lng": 13.7373},
     "nuremberg": {"name": "Nuremberg", "country": "Germany", "code": "DE", "lat": 49.4521, "lng": 11.0767},
     "nürnberg": {"name": "Nuremberg", "country": "Germany", "code": "DE", "lat": 49.4521, "lng": 11.0767},
 
-    # Czech Republic
+    # Czechia
     "prague": {"name": "Prague", "country": "Czechia", "code": "CZ", "lat": 50.0755, "lng": 14.4378},
     "praha": {"name": "Prague", "country": "Czechia", "code": "CZ", "lat": 50.0755, "lng": 14.4378},
     "brno": {"name": "Brno", "country": "Czechia", "code": "CZ", "lat": 49.1951, "lng": 16.6068},
     "ostrava": {"name": "Ostrava", "country": "Czechia", "code": "CZ", "lat": 49.8209, "lng": 18.2625},
     "plzen": {"name": "Plzeň", "country": "Czechia", "code": "CZ", "lat": 49.7384, "lng": 13.3736},
-    "plzeň": {"name": "Plzeň", "country": "Czechia", "code": "CZ", "lat": 49.7384, "lng": 13.3736},
+    "plzeń": {"name": "Plzeň", "country": "Czechia", "code": "CZ", "lat": 49.7384, "lng": 13.3736},
 
     # Slovakia
     "bratislava": {"name": "Bratislava", "country": "Slovakia", "code": "SK", "lat": 48.1486, "lng": 17.1077},
@@ -52,29 +53,31 @@ CITIES = {
     "zilina": {"name": "Žilina", "country": "Slovakia", "code": "SK", "lat": 49.2231, "lng": 18.7394},
     "žilina": {"name": "Žilina", "country": "Slovakia", "code": "SK", "lat": 49.2231, "lng": 18.7394},
 
-    # Austria
-    "vienna": {"name": "Vienna", "country": "Austria", "code": "AT", "lat": 48.2082, "lng": 16.3738},
-    "wien": {"name": "Vienna", "country": "Austria", "code": "AT", "lat": 48.2082, "lng": 16.3738},
-    "graz": {"name": "Graz", "country": "Austria", "code": "AT", "lat": 47.0707, "lng": 15.4395},
-    "linz": {"name": "Linz", "country": "Austria", "code": "AT", "lat": 48.3069, "lng": 14.2858},
-    "salzburg": {"name": "Salzburg", "country": "Austria", "code": "AT", "lat": 47.8095, "lng": 13.0550},
-
     # Lithuania
     "vilnius": {"name": "Vilnius", "country": "Lithuania", "code": "LT", "lat": 54.6872, "lng": 25.2797},
     "kaunas": {"name": "Kaunas", "country": "Lithuania", "code": "LT", "lat": 54.8985, "lng": 23.9036},
     "klaipeda": {"name": "Klaipėda", "country": "Lithuania", "code": "LT", "lat": 55.7033, "lng": 21.1443},
     "klaipėda": {"name": "Klaipėda", "country": "Lithuania", "code": "LT", "lat": 55.7033, "lng": 21.1443},
+    "siauliai": {"name": "Šiauliai", "country": "Lithuania", "code": "LT", "lat": 55.9333, "lng": 23.3167},
+    "šiauliai": {"name": "Šiauliai", "country": "Lithuania", "code": "LT", "lat": 55.9333, "lng": 23.3167},
+
+    # Belarus
+    "minsk": {"name": "Minsk", "country": "Belarus", "code": "BY", "lat": 53.9006, "lng": 27.5590},
+    "brest": {"name": "Brest", "country": "Belarus", "code": "BY", "lat": 52.0976, "lng": 23.7341},
+    "grodno": {"name": "Grodno", "country": "Belarus", "code": "BY", "lat": 53.6694, "lng": 23.8131},
+    "gomel": {"name": "Gomel", "country": "Belarus", "code": "BY", "lat": 52.4345, "lng": 30.9754},
+    "vitebsk": {"name": "Vitebsk", "country": "Belarus", "code": "BY", "lat": 55.1904, "lng": 30.2049},
+    "mogilev": {"name": "Mogilev", "country": "Belarus", "code": "BY", "lat": 53.9168, "lng": 30.3449},
 
     # Ukraine
-    "lviv": {"name": "Lviv", "country": "Ukraine", "code": "UA", "lat": 49.8397, "lng": 24.0297},
     "kyiv": {"name": "Kyiv", "country": "Ukraine", "code": "UA", "lat": 50.4501, "lng": 30.5234},
-    "lutsk": {"name": "Lutsk", "country": "Ukraine", "code": "UA", "lat": 50.7472, "lng": 25.3254},
-
-    # Hungary
-    "budapest": {"name": "Budapest", "country": "Hungary", "code": "HU", "lat": 47.4979, "lng": 19.0402},
-    "debrecen": {"name": "Debrecen", "country": "Hungary", "code": "HU", "lat": 47.5316, "lng": 21.6273},
-    "gyor": {"name": "Győr", "country": "Hungary", "code": "HU", "lat": 47.6875, "lng": 17.6504},
-    "győr": {"name": "Győr", "country": "Hungary", "code": "HU", "lat": 47.6875, "lng": 17.6504},
+    "kiev": {"name": "Kyiv", "country": "Ukraine", "code": "UA", "lat": 50.4501, "lng": 30.5234},
+    "kharkiv": {"name": "Kharkiv", "country": "Ukraine", "code": "UA", "lat": 49.9935, "lng": 36.2304},
+    "odesa": {"name": "Odesa", "country": "Ukraine", "code": "UA", "lat": 46.4825, "lng": 30.7233},
+    "odessa": {"name": "Odesa", "country": "Ukraine", "code": "UA", "lat": 46.4825, "lng": 30.7233},
+    "dnipro": {"name": "Dnipro", "country": "Ukraine", "code": "UA", "lat": 48.4647, "lng": 35.0462},
+    "lviv": {"name": "Lviv", "country": "Ukraine", "code": "UA", "lat": 49.8397, "lng": 24.0297},
+    "zaporizhzhia": {"name": "Zaporizhzhia", "country": "Ukraine", "code": "UA", "lat": 47.8388, "lng": 35.1396},
 }
 
 # Highway distances for popular corridors
@@ -85,30 +88,41 @@ KNOWN_ROAD_DISTANCES = {
     ("warsaw", "gdansk"): 342.0,
     ("warsaw", "poznan"): 310.0,
     ("warsaw", "prague"): 678.0,
-    ("warsaw", "vienna"): 670.0,
     ("warsaw", "bratislava"): 650.0,
     ("warsaw", "vilnius"): 460.0,
+    ("warsaw", "minsk"): 550.0,
+    ("warsaw", "brest"): 200.0,
+    ("warsaw", "grodno"): 270.0,
     ("warsaw", "lviv"): 395.0,
     ("warsaw", "kyiv"): 780.0,
     ("krakow", "prague"): 535.0,
-    ("krakow", "vienna"): 460.0,
     ("krakow", "bratislava"): 380.0,
     ("krakow", "wroclaw"): 270.0,
     ("krakow", "gdansk"): 590.0,
     ("krakow", "berlin"): 600.0,
+    ("krakow", "lviv"): 330.0,
     ("wroclaw", "berlin"): 340.0,
     ("wroclaw", "prague"): 330.0,
-    ("wroclaw", "vienna"): 480.0,
     ("berlin", "prague"): 350.0,
     ("berlin", "munich"): 585.0,
-    ("berlin", "dresden"): 190.0,
     ("berlin", "hamburg"): 290.0,
-    ("prague", "vienna"): 330.0,
+    ("berlin", "cologne"): 575.0,
+    ("berlin", "frankfurt"): 550.0,
+    ("berlin", "leipzig"): 190.0,
+    ("berlin", "dresden"): 190.0,
     ("prague", "bratislava"): 330.0,
-    ("vienna", "bratislava"): 80.0,
-    ("vienna", "budapest"): 245.0,
-    ("bratislava", "budapest"): 200.0,
-    ("gdansk", "berlin"): 500.0,
+    ("prague", "brno"): 205.0,
+    ("prague", "ostrava"): 370.0,
+    ("bratislava", "kosice"): 400.0,
+    ("minsk", "brest"): 350.0,
+    ("minsk", "grodno"): 290.0,
+    ("minsk", "gomel"): 310.0,
+    ("vilnius", "kaunas"): 105.0,
+    ("vilnius", "klaipeda"): 310.0,
+    ("kyiv", "lviv"): 540.0,
+    ("kyiv", "odesa"): 475.0,
+    ("kyiv", "kharkiv"): 480.0,
+    ("kyiv", "dnipro"): 480.0,
 }
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -130,20 +144,16 @@ def calculate_road_distance(origin: str, destination: str) -> float:
     k1 = origin.strip().lower()
     k2 = destination.strip().lower()
 
-    # Check known highway lookup
     if (k1, k2) in KNOWN_ROAD_DISTANCES:
         return KNOWN_ROAD_DISTANCES[(k1, k2)]
     if (k2, k1) in KNOWN_ROAD_DISTANCES:
         return KNOWN_ROAD_DISTANCES[(k2, k1)]
 
-    # Look up coordinates
     city1 = CITIES.get(k1)
     city2 = CITIES.get(k2)
 
     if city1 and city2:
         straight_km = haversine_km(city1["lat"], city1["lng"], city2["lat"], city2["lng"])
-        # European road network winding / routing factor (~1.23)
         return round(straight_km * 1.23, 1)
 
-    # Fallback default reasonable distance if unknown custom city
     return 350.0

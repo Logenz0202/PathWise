@@ -131,12 +131,15 @@ export default function InteractiveMap({
 
   // Pan and Zoom handlers
   const handleWheel = (e) => {
-    e.preventDefault()
-    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85
-    setZoom((prevZoom) => {
-      const newZoom = Math.min(Math.max(prevZoom * zoomFactor, 0.75), 3.5)
-      return newZoom
-    })
+    // Only zoom when Ctrl/Cmd is held down, allowing normal site scrolling
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault()
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85
+      setZoom((prevZoom) => {
+        const newZoom = Math.min(Math.max(prevZoom * zoomFactor, 0.75), 3.5)
+        return newZoom
+      })
+    }
   }
 
   const handleMouseDown = (e) => {
@@ -286,12 +289,15 @@ export default function InteractiveMap({
           <span className="w-2 h-2 rounded-full bg-slate-400 ring-2 ring-slate-600" />
           <span>City node</span>
         </div>
+        <span className="text-[11px] text-slate-500 border-l border-slate-700 pl-3">
+          Ctrl + scroll to zoom
+        </span>
       </div>
 
       {/* Interactive SVG Canvas */}
       <svg
         ref={svgRef}
-        viewBox="0 0 1000 700"
+        viewBox="0 0 1200 700"
         className={`w-full h-full cursor-${isDragging ? 'grabbing' : 'grab'}`}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
@@ -329,17 +335,17 @@ export default function InteractiveMap({
 
         <g
           transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}
-          style={{ transformOrigin: '500px 350px', transition: isDragging ? 'none' : 'transform 0.15s ease-out' }}
+          style={{ transformOrigin: '600px 350px', transition: isDragging ? 'none' : 'transform 0.15s ease-out' }}
         >
           {/* Subtle Latitude/Longitude Grid Lines */}
           <g opacity="0.12" stroke="#94a3b8" strokeDasharray="3 4">
-            {[10, 15, 20, 25, 30].map((lng) => {
+            {[8, 12, 16, 20, 24, 28, 32, 36, 40].map((lng) => {
               const { x } = project(50, lng)
               return <line key={`lng-${lng}`} x1={x} y1="0" x2={x} y2="700" />
             })}
-            {[48, 50, 52, 54, 56].map((lat) => {
+            {[46, 48, 50, 52, 54, 56].map((lat) => {
               const { y } = project(lat, 20)
-              return <line key={`lat-${lat}`} x1="0" y1={y} x2="1000" y2={y} />
+              return <line key={`lat-${lat}`} x1="0" y1={y} x2="1200" y2={y} />
             })}
           </g>
 

@@ -79,3 +79,123 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+/* ---------- Interactive map (Leaflet + OpenStreetMap) ---------- */
+.pw-map .leaflet-container {
+  background: #0b1220;
+  font-family: inherit;
+}
+
+/* Dark mode for standard OSM tiles: invert, then rotate hues back so water stays blue */
+.pw-dark-tiles .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.85) saturate(0.6);
+}
+
+.pw-map .leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.75);
+  color: #94a3b8;
+  font-size: 10px;
+}
+.pw-map .leaflet-control-attribution a {
+  color: #7dd3fc;
+}
+
+/* City name labels */
+.pw-map .leaflet-tooltip.pw-city-label {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  color: #e2e8f0;
+  font-size: 10px;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 4px rgba(0, 0, 0, 0.85);
+}
+.pw-map:not(.pw-dark-tiles) .leaflet-tooltip.pw-city-label {
+  color: #0f172a;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 2px #fff;
+}
+.pw-map .leaflet-tooltip.pw-city-label::before {
+  display: none;
+}
+.pw-map .leaflet-tooltip.pw-tier-1 {
+  font-size: 12px;
+  font-weight: 700;
+}
+.pw-map .leaflet-tooltip.pw-tier-2 {
+  font-size: 11px;
+  font-weight: 600;
+}
+.pw-map .leaflet-tooltip.pw-origin-label,
+.pw-map .leaflet-tooltip.pw-dest-label {
+  font-size: 12px;
+  font-weight: 800;
+}
+.pw-map .leaflet-tooltip.pw-origin-label {
+  color: #6ee7b7 !important;
+}
+.pw-map .leaflet-tooltip.pw-dest-label {
+  color: #a5b4fc !important;
+}
+
+/* Start / finish pins */
+.pw-endpoint {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: var(--pw-color);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+.pw-endpoint::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  background: var(--pw-color);
+  opacity: 0.35;
+  z-index: -1;
+  animation: pwPing 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes pwPing {
+  75%,
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* Route */
+.pw-route-dash {
+  stroke-dasharray: 8 8;
+  animation: pwDashFlow 1.2s linear infinite;
+}
+@keyframes pwDashFlow {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+.pw-distance-badge {
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: #090d16;
+  border: 1.5px solid #38bdf8;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.pw-choice-popup .leaflet-popup-content {
+  margin: 10px 12px;
+}

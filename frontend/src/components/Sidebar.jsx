@@ -1,9 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import {
-  CITIES,
-  calculateRoadDistance,
-  findCityByName,
-} from '../utils/geoData'
+import { calculateRoadDistance, searchCities } from '../utils/geoData'
 import {
   MapPin,
   ArrowUpDown,
@@ -75,17 +71,9 @@ export default function Sidebar({
   }, [destinationCity])
 
   // Filter cities for autocomplete
-  const filteredOriginCities = CITIES.filter(
-    (c) =>
-      c.name.toLowerCase().includes(originSearch.toLowerCase()) ||
-      c.country.toLowerCase().includes(originSearch.toLowerCase())
-  ).slice(0, 8)
+  const filteredOriginCities = searchCities(originSearch)
 
-  const filteredDestCities = CITIES.filter(
-    (c) =>
-      c.name.toLowerCase().includes(destSearch.toLowerCase()) ||
-      c.country.toLowerCase().includes(destSearch.toLowerCase())
-  ).slice(0, 8)
+  const filteredDestCities = searchCities(destSearch)
 
   // Auto-calculated distance in km
   const autoDistance = calculateRoadDistance(originCity, destinationCity)

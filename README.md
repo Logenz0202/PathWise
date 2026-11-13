@@ -47,6 +47,17 @@ That's it! Docker will automatically spin up:
 * **Frontend (React + Vite):** Available at `http://localhost:5173`
 
 ## 🗺️ Roadmap / Future Features
-- [ ] Integration with real-time geolocation and map services (Leaflet.js / Mapbox).
+- [x] Interactive map on OpenStreetMap tiles (Leaflet) with ~1,700 clickable cities.
 - [ ] Database module for gas stations and Electric Vehicle (EV) charging points along the route.
 - [ ] User accounts and favorite saved routes tracking.
+
+
+## 🏙️ City Data
+
+The map, the sidebar autocomplete and the backend share one city list (every place with 15k+ inhabitants in Poland, Germany, Czechia, Slovakia, Lithuania, Belarus and Ukraine): `frontend/src/data/cities.json` and `backend/app/data/cities.json`. It is generated from [GeoNames](https://www.geonames.org/) (CC-BY 4.0). Map tiles © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
+
+To regenerate it, download and unzip [`cities15000.zip`](https://download.geonames.org/export/dump/cities15000.zip), then run:
+
+```bash
+node scripts/build_cities.mjs path/to/cities15000.txt
+```

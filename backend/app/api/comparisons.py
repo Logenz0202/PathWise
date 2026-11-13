@@ -10,7 +10,7 @@ from app.schemas.comparison import (
 )
 from app.services.calculator import calculate_comparison
 from app.services.eco_coach import eco_coach
-from app.services.geo import calculate_road_distance, CITIES
+from app.services.geo import calculate_road_distance, CITY_LIST
 
 router = APIRouter(prefix="/api/comparisons", tags=["comparisons"])
 
@@ -18,11 +18,7 @@ router = APIRouter(prefix="/api/comparisons", tags=["comparisons"])
 @router.get("/cities")
 def list_cities():
     """List supported cities for the interactive map."""
-    unique_cities = {}
-    for city in CITIES.values():
-        if city["name"] not in unique_cities:
-            unique_cities[city["name"]] = city
-    return list(unique_cities.values())
+    return CITY_LIST
 
 
 @router.get("/distance")

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Fuel, Gauge, Zap, Pencil } from 'lucide-react'
 import { FUEL_PROFILES, fuelProfile } from '../utils/vehicle'
 import { CURRENCIES, useCurrency } from '../utils/currency'
+import { useI18n } from '../i18n/LanguageContext'
 
 const FUEL_ICONS = { petrol: Fuel, diesel: Fuel, lpg: Gauge, electric: Zap }
 
@@ -53,6 +54,12 @@ export function useCarConfig() {
 // One-line summary of the car profile; clicking it opens an editing panel above it.
 export default function CarSettings({ config, selectFuelType, setField }) {
   const { symbol } = useCurrency()
+  const { t, formatNumber } = useI18n()
+  // Typed values are kept as-is in the inputs; the summary shows them with the language's decimal separator
+  const show = (raw, digits) => {
+    const n = parseFloat(raw)
+    return Number.isFinite(n) ? formatNumber(n, digits) : '–'
+  }
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
   const profile = fuelProfile(config.fuelType)
@@ -85,9 +92,9 @@ export default function CarSettings({ config, selectFuelType, setField }) {
         }`}
       >
         <Icon className="w-4 h-4 text-primary-600 shrink-0" />
-        <span className="text-slate-500 shrink-0">Your car:</span>
+        <span className="text-slate-500 shrink-0">{t('car.yourCar')}</span>
         <span className="font-semibold text-slate-800 truncate">
-          {profile.label} · {config.consumption || '–'} {profile.unit}/100km · {config.price || '–'} {symbol}/
+          {t(profile.labelKey)} · {show(config.consumption, 1)} {profile.unit}/100km · {show(config.price, 2)} {symbol}/
           {profile.unit}
         </span>
         <Pencil className="w-3.5 h-3.5 text-slate-400 ml-auto shrink-0" />
@@ -96,9 +103,9 @@ export default function CarSettings({ config, selectFuelType, setField }) {
       {open && (
         <div className="absolute bottom-full left-0 right-0 mb-2 p-3.5 space-y-3 text-xs bg-white rounded-xl border border-slate-200 shadow-xl z-20">
           <div>
-            <span className="block font-medium text-slate-600 mb-1.5">Fuel type</span>
+            <span className="block font-medium text-slate-600 mb-1.5">{t('car.fuelType')}</span>
             <div className="grid grid-cols-2 gap-1.5">
-              {Object.entries(FUEL_PROFILES).map(([value, { label }]) => {
+              {Object.entries(FUEL_PROFILES).map(([value, { labelKey }]) => {
                 const FuelIcon = FUEL_ICONS[value]
                 return (
                   <button
@@ -112,7 +119,7 @@ export default function CarSettings({ config, selectFuelType, setField }) {
                     }`}
                   >
                     <FuelIcon className="w-3.5 h-3.5 text-slate-500" />
-                    <span>{label}</span>
+                    <span>{t(labelKey)}</span>
                   </button>
                 )
               })}
@@ -121,7 +128,7 @@ export default function CarSettings({ config, selectFuelType, setField }) {
 
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
-              <span className="block font-medium text-slate-600 mb-1">Consumption</span>
+              <span className="block font-medium text-slate-600 mb-1">{t('car.consumption')}</span>
               <span className="relative block">
                 <input
                   type="number"
@@ -137,7 +144,7 @@ export default function CarSettings({ config, selectFuelType, setField }) {
               </span>
             </label>
             <label className="block">
-              <span className="block font-medium text-slate-600 mb-1">{profile.priceLabel}</span>
+              <span className="block font-medium text-slate-600 mb-1">{t(profile.priceKey)}</span>
               <span className="relative block">
                 <input
                   type="number"
@@ -159,7 +166,7 @@ export default function CarSettings({ config, selectFuelType, setField }) {
             onClick={() => setOpen(false)}
             className="w-full py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors"
           >
-            Done
+            {t('car.done')}
           </button>
         </div>
       )}

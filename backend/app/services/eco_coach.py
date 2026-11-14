@@ -8,12 +8,48 @@ from app.schemas.comparison import TransportOption
 
 logger = logging.getLogger("uvicorn.error")
 
+SYSTEM_PROMPT = (
+    "You are an expert eco-travel advisor. Provide concise, personalized recommendations "
+    "comparing transport options based on time, cost, and environmental impact."
+)
 
-def format_money(eur: float, currency: str = "EUR") -> str:
-    """Format an EUR amount in the user's display currency."""
+# Text for the offline fallback recommendation, per UI language
+FALLBACK_TEXT = {
+    "en": {
+        "modes": {"car": "Car", "train": "Train", "bus": "Bus"},
+        "all": "🏆 **{mode}** wins across all criteria — fastest, cheapest, and lowest emissions!",
+        "fastest": "🏃 **Fastest**: {mode} ({value})",
+        "cheapest": "💰 **Cheapest**: {mode} ({value})",
+        "greenest": "🌱 **Greenest**: {mode} ({value})",
+        "speed_eco": "\n✨ **Recommendation**: {mode} gives you both speed and sustainability!",
+        "money_eco": "\n✨ **Recommendation**: {mode} saves money AND the planet!",
+        "priority": "\n🤔 **Choose based on priority**: Speed → {fast}, Budget → {cheap}, Eco → {green}",
+    },
+    "pl": {
+        "modes": {"car": "Samochód", "train": "Pociąg", "bus": "Autobus"},
+        "all": "🏆 **{mode}** wygrywa we wszystkich kategoriach — najszybszy, najtańszy i najbardziej ekologiczny!",
+        "fastest": "🏃 **Najszybciej**: {mode} ({value})",
+        "cheapest": "💰 **Najtaniej**: {mode} ({value})",
+        "greenest": "🌱 **Najbardziej ekologicznie**: {mode} ({value})",
+        "speed_eco": "\n✨ **Rekomendacja**: {mode} łączy szybkość z ekologią!",
+        "money_eco": "\n✨ **Rekomendacja**: {mode} oszczędza pieniądze i planetę!",
+        "priority": "\n🤔 **Wybierz według priorytetu**: szybkość → {fast}, budżet → {cheap}, ekologia → {green}",
+    },
+}
+
+
+def format_number(value: float, digits: int, language: str = "en") -> str:
+    """Format a number with the language's decimal separator (95.1 / 95,1)."""
+    text = f"{value:.{digits}f}"
+    return text.replace(".", ",") if language == "pl" else text
+
+
+def format_money(eur: float, currency: str = "EUR", language: str = "en") -> str:
+    """Format an EUR amount in the user's display currency and language."""
     if currency == "PLN":
-        return f"{eur * settings.EUR_TO_PLN_RATE:.2f} zł"
-    return f"€{eur:.2f}"
+        return f"{format_number(eur * settings.EUR_TO_PLN_RATE, 2, language)} zł"
+    amount = format_number(eur, 2, language)
+    return f"{amount} €" if language == "pl" else f"€{amount}"
 
 
 class EcoCoachService:
@@ -32,13 +68,15 @@ class EcoCoachService:
         bus: TransportOption,
         car_fuel_type: Optional[str] = None,
         currency: str = "EUR",
+        language: str = "en",
     ) -> str:
         """Get AI recommendation for transport choice."""
 
         if not self.api_key:
-            return self._fallback_recommendation(car, train, bus, currency)
+            return self._fallback_recommendation(car, train, bus, currency, language)
 
         prompt = self._build_prompt(origin, destination, distance_km, car, train, bus, car_fuel_type, currency)
+        system_prompt = SYSTEM_PROMPT + (" Always answer in Polish." if language == "pl" else "")
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -53,11 +91,8 @@ class EcoCoachService:
                     json={
                         "model": self.model,
                         "messages": [
-                            {
-                                "role": "system",
-                                "content": "You are an expert eco-travel advisor. Provide concise, personalized recommendations comparing transport options based on time, cost, and environmental impact."
-                            },
-                            {"role": "user", "content": prompt}
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": prompt},
                         ],
                         "max_tokens": 300,
                         "temperature": 0.7,
@@ -69,7 +104,7 @@ class EcoCoachService:
         except Exception as exc:
             # Any API problem (network, quota, bad model ID) falls back to the offline advice
             logger.warning("Eco-Coach AI request failed, using offline fallback: %s", exc)
-            return self._fallback_recommendation(car, train, bus, currency)
+            return self._fallback_recommendation(car, train, bus, currency, language)
 
     def _build_prompt(
         self,
@@ -103,34 +138,39 @@ Provide a concise recommendation (2-3 sentences) considering:
         train: TransportOption,
         bus: TransportOption,
         currency: str = "EUR",
+        language: str = "en",
     ) -> str:
         """Offline fallback recommendation logic."""
+        text = FALLBACK_TEXT.get(language, FALLBACK_TEXT["en"])
+        modes = text["modes"]
         options = [
-            ("Car", car.time_minutes, car.cost_eur, car.co2_kg),
-            ("Train", train.time_minutes, train.cost_eur, train.co2_kg),
-            ("Bus", bus.time_minutes, bus.cost_eur, bus.co2_kg),
+            (modes["car"], car),
+            (modes["train"], train),
+            (modes["bus"], bus),
         ]
 
         # Find best for each criterion
-        fastest = min(options, key=lambda x: x[1])
-        cheapest = min(options, key=lambda x: x[2])
-        greenest = min(options, key=lambda x: x[3])
+        fastest = min(options, key=lambda o: o[1].time_minutes)
+        cheapest = min(options, key=lambda o: o[1].cost_eur)
+        greenest = min(options, key=lambda o: o[1].co2_kg)
 
         if fastest[0] == cheapest[0] == greenest[0]:
-            return f"🏆 **{fastest[0]}** wins across all criteria — fastest, cheapest, and lowest emissions!"
+            return text["all"].format(mode=fastest[0])
 
         lines = [
-            f"🏃 **Fastest**: {fastest[0]} ({fastest[1]:.0f} min)",
-            f"💰 **Cheapest**: {cheapest[0]} ({format_money(cheapest[2], currency)})",
-            f"🌱 **Greenest**: {greenest[0]} ({greenest[3]:.1f} kg CO₂)",
+            text["fastest"].format(mode=fastest[0], value=f"{fastest[1].time_minutes:.0f} min"),
+            text["cheapest"].format(mode=cheapest[0], value=format_money(cheapest[1].cost_eur, currency, language)),
+            text["greenest"].format(
+                mode=greenest[0], value=f"{format_number(greenest[1].co2_kg, 1, language)} kg CO₂"
+            ),
         ]
 
         if fastest[0] == greenest[0]:
-            lines.append(f"\n✨ **Recommendation**: {fastest[0]} gives you both speed and sustainability!")
+            lines.append(text["speed_eco"].format(mode=fastest[0]))
         elif cheapest[0] == greenest[0]:
-            lines.append(f"\n✨ **Recommendation**: {cheapest[0]} saves money AND the planet!")
+            lines.append(text["money_eco"].format(mode=cheapest[0]))
         else:
-            lines.append(f"\n🤔 **Choose based on priority**: Speed → {fastest[0]}, Budget → {cheapest[0]}, Eco → {greenest[0]}")
+            lines.append(text["priority"].format(fast=fastest[0], cheap=cheapest[0], green=greenest[0]))
 
         return "\n".join(lines)
 

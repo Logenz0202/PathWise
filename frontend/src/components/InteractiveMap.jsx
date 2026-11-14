@@ -23,6 +23,7 @@ import {
   findCityByName,
 } from '../utils/geoData'
 import { ZoomIn, ZoomOut, RotateCcw, Compass, Moon, Sun } from 'lucide-react'
+import { useI18n } from '../i18n/LanguageContext'
 
 const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 const OSM_ATTRIBUTION =
@@ -121,20 +122,21 @@ function SizeWatcher() {
 
 function MapControls({ darkTiles, onToggleTiles }) {
   const map = useMap()
+  const { t } = useI18n()
   const btn =
     'p-2.5 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white rounded-xl border border-slate-700/80 shadow-lg transition-all backdrop-blur-md'
   return (
     <div className="absolute bottom-8 right-5 z-[1000] flex flex-col gap-2">
-      <button onClick={() => map.zoomIn()} title="Zoom In" className={btn}>
+      <button onClick={() => map.zoomIn()} title={t('map.zoomIn')} className={btn}>
         <ZoomIn className="w-4 h-4" />
       </button>
-      <button onClick={() => map.zoomOut()} title="Zoom Out" className={btn}>
+      <button onClick={() => map.zoomOut()} title={t('map.zoomOut')} className={btn}>
         <ZoomOut className="w-4 h-4" />
       </button>
-      <button onClick={() => map.setView(MAP_CENTER, MAP_ZOOM)} title="Reset View" className={btn}>
+      <button onClick={() => map.setView(MAP_CENTER, MAP_ZOOM)} title={t('map.reset')} className={btn}>
         <RotateCcw className="w-4 h-4" />
       </button>
-      <button onClick={onToggleTiles} title={darkTiles ? 'Light map' : 'Dark map'} className={btn}>
+      <button onClick={onToggleTiles} title={t(darkTiles ? 'map.lightMap' : 'map.darkMap')} className={btn}>
         {darkTiles ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
       </button>
     </div>
@@ -151,6 +153,7 @@ export default function InteractiveMap({
 }) {
   const [view, setView] = useState({ zoom: MAP_ZOOM, bounds: null })
   const [choiceCity, setChoiceCity] = useState(null)
+  const { t, stableText } = useI18n()
   const [darkTiles, setDarkTiles] = useState(true)
 
   // Canvas renderer keeps ~1.7k clickable markers fast. `tolerance` widens each marker's
@@ -218,12 +221,12 @@ export default function InteractiveMap({
           <Compass className="w-4 h-4 text-primary-400 animate-spin-slow" />
           <span>
             {!originCity ? (
-              <strong className="text-emerald-400">Step 1: Click map to select Start city</strong>
+              <strong className="text-emerald-400">{t('map.step1')}</strong>
             ) : !destinationCity ? (
-              <strong className="text-indigo-400">Step 2: Click map to select Destination</strong>
+              <strong className="text-indigo-400">{t('map.step2')}</strong>
             ) : (
               <span className="text-emerald-300 font-medium">
-                Route Active: <span className="text-white">{originCity}</span> →{' '}
+                {t('map.routeActive')} <span className="text-white">{originCity}</span> →{' '}
                 <span className="text-white">{destinationCity}</span>
               </span>
             )}
@@ -232,7 +235,7 @@ export default function InteractiveMap({
 
         <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 scrollbar-none">
           <span className="text-[11px] font-semibold text-slate-200 uppercase tracking-wider hidden sm:inline mr-1 drop-shadow">
-            Popular:
+            {stableText('map.popular')}
           </span>
           {POPULAR_ROUTES.map((r, i) => (
             <button
@@ -250,18 +253,18 @@ export default function InteractiveMap({
       <div className="absolute bottom-8 left-5 z-[1000] hidden sm:flex items-center gap-4 px-3 py-2 bg-slate-900/85 backdrop-blur-md border border-slate-800 rounded-xl text-xs text-slate-400 pointer-events-none">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-          <span>Start (A)</span>
+          {stableText('map.start')}
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-          <span>Finish (B)</span>
+          {stableText('map.finish')}
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-sky-400 ring-2 ring-slate-900" />
-          <span>City</span>
+          {stableText('map.city')}
         </div>
         <span className="text-[11px] text-slate-500 border-l border-slate-700 pl-3">
-          Zoom in for more cities · {visibleCities.length + (originObj ? 1 : 0) + (destObj ? 1 : 0)} shown
+          {t('map.zoomHint', { count: visibleCities.length + (originObj ? 1 : 0) + (destObj ? 1 : 0) })}
         </span>
       </div>
 
@@ -369,7 +372,7 @@ export default function InteractiveMap({
           >
             <div className="text-center">
               <div className="font-bold text-slate-900 mb-2">
-                {choiceCity.name} <span className="font-normal text-slate-500">({choiceCity.country})</span>
+                {choiceCity.name} <span className="font-normal text-slate-500">({t(`country.${choiceCity.code}`)})</span>
               </div>
               <div className="flex gap-2">
                 <button
@@ -379,7 +382,7 @@ export default function InteractiveMap({
                     setChoiceCity(null)
                   }}
                 >
-                  Set as Start
+                  {t('map.setStart')}
                 </button>
                 <button
                   className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold"
@@ -388,7 +391,7 @@ export default function InteractiveMap({
                     setChoiceCity(null)
                   }}
                 >
-                  Set as Finish
+                  {t('map.setFinish')}
                 </button>
               </div>
             </div>

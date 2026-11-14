@@ -1,32 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useApi } from '../hooks/useApi'
 import { Car, Train, Bus, Clock, Trash2, ChevronRight } from 'lucide-react'
-import { formatDuration } from '../utils/format'
 import { useCurrency } from '../utils/currency'
-
-function formatTimeAgo(dateStr) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffSec = Math.floor((now - date) / 1000)
-  if (diffSec < 60) return 'just now'
-  const diffMin = Math.floor(diffSec / 60)
-  if (diffMin < 60) return `${diffMin}m ago`
-  const diffHr = Math.floor(diffMin / 60)
-  if (diffHr < 24) return `${diffHr}h ago`
-  const diffDays = Math.floor(diffHr / 24)
-  return `${diffDays}d ago`
-}
+import { useI18n } from '../i18n/LanguageContext'
 
 const TRANSPORT_CONFIG = {
-  car: { icon: Car, color: 'text-blue-600', bg: 'bg-blue-50', label: 'Car' },
-  train: { icon: Train, color: 'text-red-600', bg: 'bg-red-50', label: 'Train' },
-  bus: { icon: Bus, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Bus' },
+  car: { icon: Car, color: 'text-blue-600', bg: 'bg-blue-50', labelKey: 'mode.car' },
+  train: { icon: Train, color: 'text-red-600', bg: 'bg-red-50', labelKey: 'mode.train' },
+  bus: { icon: Bus, color: 'text-amber-600', bg: 'bg-amber-50', labelKey: 'mode.bus' },
 }
 
 export default function HistoryList({ onViewComparison, onStartComparing }) {
   const { get, delete: del, loading, error } = useApi()
   const { formatMoney } = useCurrency()
+  const { t, formatNumber, formatDuration, timeAgo } = useI18n()
   const [comparisons, setComparisons] = useState([])
   const [deletingId, setDeletingId] = useState(null)
 
@@ -45,7 +32,7 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
 
   const handleDelete = async (e, id) => {
     e.stopPropagation() // the button sits inside the clickable card
-    if (!confirm('Delete this comparison?')) return
+    if (!confirm(t('history.confirmDelete'))) return
 
     setDeletingId(id)
     try {
@@ -53,7 +40,7 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
       setComparisons(prev => prev.filter(c => c.id !== id))
     } catch (err) {
       console.error('Failed to delete:', err)
-      alert('Failed to delete comparison')
+      alert(t('history.deleteFailed'))
     } finally {
       setDeletingId(null)
     }
@@ -72,7 +59,7 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4" />
-        <p className="text-gray-600">Loading history...</p>
+        <p className="text-gray-600">{t('history.loading')}</p>
       </div>
     )
   }
@@ -83,13 +70,13 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
         <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
           <Clock className="w-8 h-8 text-gray-400" />
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No comparisons yet</h3>
-        <p className="text-gray-500 mb-6">Start by comparing your first trip!</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">{t('history.empty')}</h3>
+        <p className="text-gray-500 mb-6">{t('history.emptyHint')}</p>
         <button
           onClick={onStartComparing}
           className="btn-primary"
         >
-          Compare Now
+          {t('history.compareNow')}
         </button>
       </div>
     )
@@ -98,8 +85,8 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-2xl font-bold text-gray-900">Comparison History</h2>
-        <span className="text-sm text-gray-500">{comparisons.length} saved</span>
+        <h2 className="text-2xl font-bold text-gray-900">{t('history.title')}</h2>
+        <span className="text-sm text-gray-500">{t('history.saved', { count: comparisons.length })}</span>
       </div>
 
       {error && (
@@ -129,11 +116,11 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
                   {comparison.origin} → {comparison.destination}
                 </h3>
                 <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-                  <span>{comparison.distance_km} km</span>
+                  <span>{formatNumber(comparison.distance_km, 0)} km</span>
                   <span>·</span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    {formatTimeAgo(comparison.created_at)}
+                    {timeAgo(comparison.created_at)}
                   </span>
                 </div>
               </div>
@@ -144,8 +131,8 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
                   onClick={(e) => handleDelete(e, comparison.id)}
                   disabled={deletingId === comparison.id}
                   className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                  title="Delete"
-                  aria-label={`Delete ${comparison.origin} to ${comparison.destination}`}
+                  title={t('history.delete')}
+                  aria-label={t('history.deleteLabel', { origin: comparison.origin, destination: comparison.destination })}
                 >
                   {deletingId === comparison.id ? (
                     <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
@@ -168,14 +155,14 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
                 return (
                   <div
                     key={key}
-                    title={config.label}
+                    title={t(config.labelKey)}
                     className={`flex items-center gap-2.5 min-w-0 px-3 py-2 rounded-lg ${config.bg} text-xs`}
                   >
                     <Icon className={`w-4 h-4 shrink-0 ${config.color}`} />
                     <div className="min-w-0">
                       <div className="font-semibold text-gray-900">{formatDuration(option.time_minutes)}</div>
                       <div className="text-gray-500 truncate">
-                        {formatMoney(option.cost_eur)} · {option.co2_kg.toFixed(1)} kg CO₂
+                        {formatMoney(option.cost_eur)} · {formatNumber(option.co2_kg)} kg CO₂
                       </div>
                     </div>
                   </div>

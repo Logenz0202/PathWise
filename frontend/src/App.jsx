@@ -6,6 +6,8 @@ import HistoryList from './components/HistoryList'
 import { useApi } from './hooks/useApi'
 import { calculateRoadDistance } from './utils/geoData'
 import { CURRENCIES, useCurrency } from './utils/currency'
+import { LANGUAGES, useI18n } from './i18n/LanguageContext'
+import PillToggle from './components/PillToggle'
 import {
   Compass,
   Car,
@@ -25,6 +27,9 @@ function App() {
 
   const { post, loading, error } = useApi()
   const { currency, setCurrency } = useCurrency()
+  const { lang, setLang, t, stableText } = useI18n()
+  const otherCurrency = currency === 'EUR' ? 'PLN' : 'EUR'
+  const otherLang = lang === 'en' ? 'pl' : 'en'
 
   // Calculate current road distance
   const currentDistance = calculateRoadDistance(originCity, destinationCity)
@@ -90,33 +95,26 @@ function App() {
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 hidden sm:block">
-                  Smart European Transport & Eco Route Planner
+                  {t('app.tagline')}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Currency toggle: one button, a click anywhere flips EUR <-> PLN app-wide */}
-              <button
-                type="button"
-                onClick={() => setCurrency(currency === 'EUR' ? 'PLN' : 'EUR')}
-                title={`Show prices in ${currency === 'EUR' ? 'PLN' : 'EUR'}`}
-                aria-label={`Currency: ${currency}. Switch to ${currency === 'EUR' ? 'PLN' : 'EUR'}`}
-                className="group flex items-center bg-slate-800/80 hover:bg-slate-800 p-1 rounded-xl border border-slate-700/60 hover:border-slate-600 text-xs font-semibold transition-colors"
-              >
-                {Object.keys(CURRENCIES).map((code) => (
-                  <span
-                    key={code}
-                    className={`px-2.5 py-1.5 rounded-lg transition-all ${
-                      currency === code
-                        ? 'bg-slate-600 text-white shadow-md'
-                        : 'text-slate-400 group-hover:text-white'
-                    }`}
-                  >
-                    {code}
-                  </span>
-                ))}
-              </button>
+              <PillToggle
+                options={Object.keys(LANGUAGES)}
+                value={lang}
+                onChange={setLang}
+                label={t('toggle.language', { current: lang.toUpperCase(), next: otherLang.toUpperCase() })}
+                title={t('toggle.languageTitle', { next: otherLang.toUpperCase() })}
+              />
+              <PillToggle
+                options={Object.keys(CURRENCIES)}
+                value={currency}
+                onChange={setCurrency}
+                label={t('toggle.currency', { current: currency, next: otherCurrency })}
+                title={t('toggle.currencyTitle', { next: otherCurrency })}
+              />
 
               {/* Nav Tabs */}
               <nav className="flex items-center gap-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 text-xs font-semibold">
@@ -129,7 +127,7 @@ function App() {
                   }`}
                 >
                   <Compass className="w-4 h-4" />
-                  <span>Interactive Map</span>
+                  {stableText('nav.map')}
                 </button>
 
                 <button
@@ -141,7 +139,7 @@ function App() {
                   }`}
                 >
                   <History className="w-4 h-4" />
-                  <span>History</span>
+                  {stableText('nav.history')}
                 </button>
               </nav>
             </div>
@@ -189,7 +187,7 @@ function App() {
         {activeTab === 'results' && lastComparison && (
           <ComparisonResults
             comparison={lastComparison}
-            backLabel={resultsFrom === 'history' ? 'Back to History' : 'Back to Interactive Map'}
+            backLabel={t(resultsFrom === 'history' ? 'back.history' : 'back.map')}
             onBack={() => setActiveTab(resultsFrom)}
           />
         )}
@@ -211,21 +209,21 @@ function App() {
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-400">PathWise</span>
             <span>—</span>
-            <span>Next-Gen Sustainable European Transit Routing</span>
+            <span>{t('footer.tagline')}</span>
           </div>
 
           <div className="flex items-center gap-6 text-slate-400 font-medium">
             <div className="flex items-center gap-1.5 hover:text-blue-400 transition-colors">
               <Car className="w-4 h-4 text-blue-500" />
-              <span>Car Route Engine</span>
+              <span>{t('footer.car')}</span>
             </div>
             <div className="flex items-center gap-1.5 hover:text-red-400 transition-colors">
               <Train className="w-4 h-4 text-red-500" />
-              <span>Rail Transit</span>
+              <span>{t('footer.rail')}</span>
             </div>
             <div className="flex items-center gap-1.5 hover:text-amber-400 transition-colors">
               <Bus className="w-4 h-4 text-amber-500" />
-              <span>Intercity Bus</span>
+              <span>{t('footer.bus')}</span>
             </div>
           </div>
         </div>

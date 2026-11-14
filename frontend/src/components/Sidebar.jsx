@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { calculateRoadDistance, searchCities } from '../utils/geoData'
-import { formatDuration } from '../utils/format'
+import { useI18n } from '../i18n/LanguageContext'
 import CarSettings, { useCarConfig } from './CarSettings'
 import { useCurrency } from '../utils/currency'
 import {
@@ -43,6 +43,7 @@ export default function Sidebar({
 
   const car = useCarConfig()
   const { currency } = useCurrency()
+  const { lang, t, formatNumber, formatDuration } = useI18n()
 
   // Sync inputs with selected props
   useEffect(() => {
@@ -82,7 +83,9 @@ export default function Sidebar({
       car_fuel_type: car.config.fuelType,
       car_consumption_l_per_100km: car.consumption,
       car_fuel_price_per_liter: car.priceEur,
-      currency, // only used for the AI recommendation's wording
+      // Only affect the AI recommendation's wording (amounts are always EUR)
+      currency,
+      language: lang,
     })
   }
 
@@ -96,8 +99,8 @@ export default function Sidebar({
               <Route className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-base tracking-tight">Route Planner</h2>
-              <p className="text-[11px] text-slate-400">Interactive European Transit</p>
+              <h2 className="font-bold text-base tracking-tight">{t('sidebar.title')}</h2>
+              <p className="text-[11px] text-slate-400">{t('sidebar.subtitle')}</p>
             </div>
           </div>
 
@@ -107,7 +110,7 @@ export default function Sidebar({
               onClick={onShowResults}
               className="text-xs px-2.5 py-1 bg-primary-600 hover:bg-primary-500 rounded-lg font-medium transition-colors flex items-center gap-1 shadow-sm"
             >
-              <span>View Results</span>
+              <span>{t('sidebar.viewResults')}</span>
             </button>
           )}
         </div>
@@ -121,7 +124,7 @@ export default function Sidebar({
             <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
               <span className="flex items-center gap-1">
                 <Info className="w-3.5 h-3.5 text-primary-500" />
-                Select cities or click on map
+                {t('sidebar.hint')}
               </span>
               {(originCity || destinationCity) && (
                 <button
@@ -132,7 +135,7 @@ export default function Sidebar({
                   }}
                   className="text-slate-400 hover:text-red-500 transition-colors"
                 >
-                  Clear all
+                  {t('sidebar.clearAll')}
                 </button>
               )}
             </div>
@@ -141,14 +144,14 @@ export default function Sidebar({
             <div className="relative">
               <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
-                From (Origin)
+                {t('sidebar.from')}
               </label>
               <div className="relative flex items-center">
                 <input
                   ref={originInputRef}
                   type="text"
                   value={originSearch}
-                  placeholder="e.g. Warsaw, Berlin, Kraków..."
+                  placeholder={t('sidebar.fromPlaceholder')}
                   onChange={(e) => {
                     setOriginSearch(e.target.value)
                     setShowOriginDropdown(true)
@@ -195,7 +198,7 @@ export default function Sidebar({
                         </span>
                         {city.isCapital && (
                           <span className="text-[10px] px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
-                            Capital
+                            {t('sidebar.capital')}
                           </span>
                         )}
                       </div>
@@ -211,7 +214,7 @@ export default function Sidebar({
               <button
                 type="button"
                 onClick={onSwapCities}
-                title="Swap Start and Destination"
+                title={t('sidebar.swap')}
                 className="p-1.5 bg-white hover:bg-slate-100 text-slate-600 hover:text-primary-600 rounded-full border border-slate-200 shadow-sm transition-all transform hover:rotate-180 duration-200"
               >
                 <ArrowUpDown className="w-3.5 h-3.5" />
@@ -222,14 +225,14 @@ export default function Sidebar({
             <div className="relative">
               <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 ring-2 ring-indigo-200" />
-                To (Destination)
+                {t('sidebar.to')}
               </label>
               <div className="relative flex items-center">
                 <input
                   ref={destInputRef}
                   type="text"
                   value={destSearch}
-                  placeholder="e.g. Prague, Vienna, Gdańsk..."
+                  placeholder={t('sidebar.toPlaceholder')}
                   onChange={(e) => {
                     setDestSearch(e.target.value)
                     setShowDestDropdown(true)
@@ -272,7 +275,7 @@ export default function Sidebar({
                         </span>
                         {city.isCapital && (
                           <span className="text-[10px] px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
-                            Capital
+                            {t('sidebar.capital')}
                           </span>
                         )}
                       </div>
@@ -290,17 +293,17 @@ export default function Sidebar({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  Calculated Road Distance
+                  {t('sidebar.distance')}
                 </span>
                 <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-semibold text-[10px] rounded-full">
-                  Auto-calculated
+                  {t('sidebar.auto')}
                 </span>
               </div>
 
               <div className="flex items-baseline justify-between">
                 <div>
                   <span className="text-2xl font-black text-slate-900 tracking-tight">
-                    {effectiveDistance}
+                    {Number.isInteger(effectiveDistance) ? effectiveDistance : formatNumber(effectiveDistance)}
                   </span>
                   <span className="text-sm font-semibold text-slate-500 ml-1">km</span>
                 </div>
@@ -309,7 +312,7 @@ export default function Sidebar({
                   onClick={() => setShowManualDistance(!showManualDistance)}
                   className="text-xs text-primary-600 hover:text-primary-700 font-medium underline"
                 >
-                  {showManualDistance ? 'Use automatic' : 'Adjust distance'}
+                  {showManualDistance ? t('sidebar.useAuto') : t('sidebar.adjust')}
                 </button>
               </div>
 
@@ -317,12 +320,12 @@ export default function Sidebar({
               {showManualDistance && (
                 <div className="pt-2 border-t border-slate-200">
                   <label className="block text-[11px] text-slate-600 mb-1">
-                    Custom Distance (km)
+                    {t('sidebar.customDistance')}
                   </label>
                   <input
                     type="number"
                     value={manualDistance}
-                    placeholder={`Default: ${autoDistance}`}
+                    placeholder={t('sidebar.defaultDistance', { km: autoDistance })}
                     onChange={(e) => setManualDistance(e.target.value)}
                     min="1"
                     className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
@@ -336,7 +339,7 @@ export default function Sidebar({
                   <div className="bg-white/90 p-1.5 rounded-lg border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-center gap-1 text-slate-600 text-[10px] font-semibold">
                       <Car className="w-3 h-3 text-blue-500" />
-                      <span>Car</span>
+                      <span>{t('mode.car')}</span>
                     </div>
                     <p className="text-xs font-bold text-slate-800">
                       {formatDuration(previewEstimates.carTime)}
@@ -345,7 +348,7 @@ export default function Sidebar({
                   <div className="bg-white/90 p-1.5 rounded-lg border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-center gap-1 text-slate-600 text-[10px] font-semibold">
                       <Train className="w-3 h-3 text-red-500" />
-                      <span>Train</span>
+                      <span>{t('mode.train')}</span>
                     </div>
                     <p className="text-xs font-bold text-slate-800">
                       {formatDuration(previewEstimates.trainTime)}
@@ -354,7 +357,7 @@ export default function Sidebar({
                   <div className="bg-white/90 p-1.5 rounded-lg border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-center gap-1 text-slate-600 text-[10px] font-semibold">
                       <Bus className="w-3 h-3 text-amber-500" />
-                      <span>Bus</span>
+                      <span>{t('mode.bus')}</span>
                     </div>
                     <p className="text-xs font-bold text-slate-800">
                       {formatDuration(previewEstimates.busTime)}
@@ -365,7 +368,7 @@ export default function Sidebar({
             </div>
           ) : (
             <div className="p-3 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-center text-xs text-slate-500">
-              Pick both Start & Destination to calculate distance automatically.
+              {t('sidebar.pickBoth')}
             </div>
           )}
         </div>
@@ -389,12 +392,12 @@ export default function Sidebar({
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Comparing Transport...</span>
+                <span>{t('sidebar.comparing')}</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                <span>Compare Transport Options</span>
+                <span>{t('sidebar.compare')}</span>
               </>
             )}
           </button>

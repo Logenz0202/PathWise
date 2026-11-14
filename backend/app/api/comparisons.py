@@ -46,6 +46,7 @@ async def create_comparison(
         bus=results["bus"],
         car_fuel_type=request.car_fuel_type,
         currency=request.currency,
+        language=request.language,
     )
 
     # Save to database

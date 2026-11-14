@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { calculateRoadDistance, searchCities } from '../utils/geoData'
+import { formatDuration } from '../utils/format'
 import {
   MapPin,
   ArrowUpDown,
@@ -84,12 +85,6 @@ export default function Sidebar({
         busTime: Math.round((effectiveDistance / 70) * 60),
       }
     : null
-
-  const formatHours = (mins) => {
-    const h = Math.floor(mins / 60)
-    const m = mins % 60
-    return h > 0 ? `${h}h ${m}m` : `${m}m`
-  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -358,7 +353,7 @@ export default function Sidebar({
                       <span>Car</span>
                     </div>
                     <p className="text-xs font-bold text-slate-800">
-                      {formatHours(previewEstimates.carTime)}
+                      {formatDuration(previewEstimates.carTime)}
                     </p>
                   </div>
                   <div className="bg-white/90 p-1.5 rounded-lg border border-slate-200 shadow-sm">
@@ -367,7 +362,7 @@ export default function Sidebar({
                       <span>Train</span>
                     </div>
                     <p className="text-xs font-bold text-slate-800">
-                      {formatHours(previewEstimates.trainTime)}
+                      {formatDuration(previewEstimates.trainTime)}
                     </p>
                   </div>
                   <div className="bg-white/90 p-1.5 rounded-lg border border-slate-200 shadow-sm">
@@ -376,7 +371,7 @@ export default function Sidebar({
                       <span>Bus</span>
                     </div>
                     <p className="text-xs font-bold text-slate-800">
-                      {formatHours(previewEstimates.busTime)}
+                      {formatDuration(previewEstimates.busTime)}
                     </p>
                   </div>
                 </div>

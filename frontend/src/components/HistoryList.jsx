@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useApi } from '../hooks/useApi'
-import { Car, Train, Bus, Clock, Trash2, Eye } from 'lucide-react'
+import { Car, Train, Bus, Clock, Trash2, ChevronRight } from 'lucide-react'
+import { formatDuration } from '../utils/format'
 
 function formatTimeAgo(dateStr) {
   if (!dateStr) return ''
@@ -40,7 +41,8 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
     }
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (e, id) => {
+    e.stopPropagation() // the button sits inside the clickable card
     if (!confirm('Delete this comparison?')) return
 
     setDeletingId(id)
@@ -66,7 +68,7 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
 
   if (loading && comparisons.length === 0) {
     return (
-      <div className="max-w-3xl mx-auto text-center py-12">
+      <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4" />
         <p className="text-gray-600">Loading history...</p>
       </div>
@@ -75,7 +77,7 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
 
   if (comparisons.length === 0) {
     return (
-      <div className="max-w-3xl mx-auto text-center py-16">
+      <div className="text-center py-16">
         <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
           <Clock className="w-8 h-8 text-gray-400" />
         </div>
@@ -92,14 +94,14 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div>
+      <div className="flex items-center justify-between mb-5">
         <h2 className="text-2xl font-bold text-gray-900">Comparison History</h2>
         <span className="text-sm text-gray-500">{comparisons.length} saved</span>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
           {error}
         </div>
       )}
@@ -108,39 +110,40 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
         {comparisons.map((comparison) => (
           <div
             key={comparison.id}
-            className="card p-4 hover:shadow-md transition-shadow group"
+            role="button"
+            tabIndex={0}
+            onClick={() => handleView(comparison)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleView(comparison)
+              }
+            }}
+            className="card p-4 cursor-pointer group hover:border-primary-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="font-semibold text-gray-900 truncate">
-                    {comparison.origin} → {comparison.destination}
-                  </h3>
-                  <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full whitespace-nowrap">
-                    {comparison.distance_km} km
-                  </span>
-                </div>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="flex items-center justify-between gap-4 mb-3">
+              <div className="min-w-0">
+                <h3 className="font-semibold text-gray-900 truncate group-hover:text-primary-700 transition-colors">
+                  {comparison.origin} → {comparison.destination}
+                </h3>
+                <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                  <span>{comparison.distance_km} km</span>
+                  <span>·</span>
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
+                    <Clock className="w-3 h-3" />
                     {formatTimeAgo(comparison.created_at)}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-1 flex-shrink-0">
                 <button
-                  onClick={() => handleView(comparison)}
-                  className="btn-secondary p-2"
-                  title="View details"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(comparison.id)}
+                  type="button"
+                  onClick={(e) => handleDelete(e, comparison.id)}
                   disabled={deletingId === comparison.id}
-                  className="btn-secondary p-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                   title="Delete"
+                  aria-label={`Delete ${comparison.origin} to ${comparison.destination}`}
                 >
                   {deletingId === comparison.id ? (
                     <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
@@ -148,31 +151,28 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
                     <Trash2 className="w-4 h-4" />
                   )}
                 </button>
+                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all" />
               </div>
             </div>
 
             {/* Quick preview of results */}
-            <div className="pt-3 border-t border-gray-100">
-              <div className="flex items-center gap-3 overflow-x-auto pb-2">
-                {['car', 'train', 'bus'].map((key) => {
-                  const config = TRANSPORT_CONFIG[key]
-                  const option = comparison[key]
-                  if (!option) return null
+            <div className="flex flex-wrap gap-2">
+              {['car', 'train', 'bus'].map((key) => {
+                const config = TRANSPORT_CONFIG[key]
+                const option = comparison[key]
+                if (!option) return null
 
-                  const Icon = config.icon
-                  return (
-                    <div key={key} className={`flex items-center gap-2 px-3 py-2 rounded-lg ${config.bg} whitespace-nowrap flex-shrink-0`}>
-                      <Icon className={`w-4 h-4 ${config.color}`} />
-                      <div className="text-xs">
-                        <p className="font-medium text-gray-900">{config.label}</p>
-                        <p className="text-gray-500">
-                          {Math.round(option.time_minutes)} min · €{option.cost_eur.toFixed(2)} · {option.co2_kg.toFixed(1)} kg CO₂
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                const Icon = config.icon
+                return (
+                  <div key={key} title={config.label} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${config.bg} text-xs`}>
+                    <Icon className={`w-4 h-4 ${config.color}`} />
+                    <span className="font-medium text-gray-900">{formatDuration(option.time_minutes)}</span>
+                    <span className="text-gray-500">
+                      €{option.cost_eur.toFixed(2)} · {option.co2_kg.toFixed(1)} kg CO₂
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         ))}

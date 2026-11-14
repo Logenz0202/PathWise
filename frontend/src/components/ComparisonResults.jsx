@@ -9,6 +9,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react'
+import { formatDuration } from '../utils/format'
 
 const TRANSPORT_CONFIG = {
   car: {
@@ -49,11 +50,7 @@ const METRICS = [
     label: 'Travel Time',
     icon: Clock,
     unit: 'min',
-    format: (v) => {
-      const h = Math.floor(v / 60)
-      const m = Math.round(v % 60)
-      return h > 0 ? `${h}h ${m}m` : `${m}m`
-    },
+    format: formatDuration,
   },
   {
     key: 'cost_eur',

@@ -170,7 +170,7 @@ function App() {
 
         {/* TAB 3: SAVED HISTORY */}
         {activeTab === 'history' && (
-          <div className="bg-white text-slate-900 rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-200">
+          <div className="max-w-3xl mx-auto bg-white text-slate-900 rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-200">
             <HistoryList
               onViewComparison={handleViewHistorical}
               onStartComparing={() => setActiveTab('planner')}

@@ -43,8 +43,9 @@ export function CurrencyProvider({ children }) {
     symbol,
     // EUR amount -> formatted string in the chosen currency
     formatMoney: (eur) => place(formatNumber(eur * rate, 2), lang),
-    // Amount typed in the chosen currency -> EUR
+    // Amount typed in the chosen currency -> EUR, and back (for prefilling inputs)
     toEur: (amount) => amount / rate,
+    fromEur: (eur) => eur * rate,
   }
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>

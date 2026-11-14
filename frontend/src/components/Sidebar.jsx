@@ -4,7 +4,7 @@ import { calculateRoadDistance } from '../utils/geoData'
 import { useCurrency } from '../utils/currency'
 import { MODES, MODE_KEYS } from '../utils/transport'
 import { useI18n } from '../i18n/LanguageContext'
-import CarSettings, { useCarConfig } from './CarSettings'
+import CarPicker from './CarPicker'
 import CityInput from './CityInput'
 
 export default function Sidebar({
@@ -18,13 +18,16 @@ export default function Sidebar({
   error,
   hasResults,
   onShowResults,
+  cars,
+  selectedCar,
+  onSelectCar,
+  onManageCars,
 }) {
   const [showManualDistance, setShowManualDistance] = useState(false)
   const [manualDistance, setManualDistance] = useState('')
 
   const destInputRef = useRef(null)
 
-  const car = useCarConfig()
   const { currency } = useCurrency()
   const { lang, t, formatNumber, formatDuration } = useI18n()
 
@@ -43,9 +46,12 @@ export default function Sidebar({
       origin: originCity,
       destination: destinationCity,
       distance_km: effectiveDistance,
-      car_fuel_type: car.config.fuelType,
-      car_consumption_l_per_100km: car.consumption,
-      car_fuel_price_per_liter: car.priceEur,
+      // No car selected: leave these out and the backend uses average car figures
+      ...(selectedCar && {
+        car_fuel_type: selectedCar.fuel_type,
+        car_consumption_l_per_100km: selectedCar.consumption_per_100km,
+        car_fuel_price_per_liter: selectedCar.energy_price_eur,
+      }),
       // Only affect the AI recommendation's wording (amounts are always EUR)
       currency,
       language: lang,
@@ -216,7 +222,7 @@ export default function Sidebar({
             </div>
           )}
 
-          <CarSettings config={car.config} selectFuelType={car.selectFuelType} setField={car.setField} />
+          <CarPicker cars={cars} selectedCar={selectedCar} onSelect={onSelectCar} onManage={onManageCars} />
 
           {/* Submit Action Button */}
           <button

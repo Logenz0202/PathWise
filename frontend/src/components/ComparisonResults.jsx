@@ -242,6 +242,13 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
       </div>
 
       {/* Car Configuration Details if available */}
+      {!comparison.car_fuel_type && (
+        <p className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3">
+          <Car className="w-4 h-4 text-slate-400" />
+          {t('results.averageCar')}
+        </p>
+      )}
+
       {comparison.car_fuel_type && (
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">

@@ -2,6 +2,13 @@ import { useState, useCallback } from 'react'
 
 const API_BASE = '/api'
 
+// FastAPI errors: `detail` is a string, or a list of field errors for validation (422)
+function errorMessage(body, status) {
+  if (typeof body.detail === 'string') return body.detail
+  if (Array.isArray(body.detail)) return body.detail.map((e) => e.msg).join('; ')
+  return `HTTP ${status}`
+}
+
 export function useApi() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -25,8 +32,8 @@ export function useApi() {
       const response = await fetch(`${API_BASE}${endpoint}`, options)
 
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.detail || `HTTP ${response.status}`)
+        const body = await response.json().catch(() => ({}))
+        throw new Error(errorMessage(body, response.status))
       }
 
       if (response.status === 204) {
@@ -44,7 +51,8 @@ export function useApi() {
 
   const get = useCallback((endpoint) => request('GET', endpoint), [request])
   const post = useCallback((endpoint, data) => request('POST', endpoint, data), [request])
+  const put = useCallback((endpoint, data) => request('PUT', endpoint, data), [request])
   const del = useCallback((endpoint) => request('DELETE', endpoint), [request])
 
-  return { get, post, delete: del, loading, error }
+  return { get, post, put, delete: del, loading, error }
 }

@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -17,7 +17,7 @@ from app.services.geo import calculate_road_distance
 router = APIRouter(prefix="/api/comparisons", tags=["comparisons"])
 
 
-@router.post("/", response_model=ComparisonResponse)
+@router.post("/", response_model=ComparisonResponse, status_code=status.HTTP_201_CREATED)
 async def create_comparison(
     request: ComparisonRequest,
     db: Session = Depends(get_db)
@@ -99,7 +99,7 @@ def get_comparison(
     return comparison
 
 
-@router.delete("/{comparison_id}")
+@router.delete("/{comparison_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_comparison(
     comparison_id: int,
     db: Session = Depends(get_db)
@@ -111,4 +111,4 @@ def delete_comparison(
 
     db.delete(comparison)
     db.commit()
-    return {"message": "Comparison deleted successfully"}
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

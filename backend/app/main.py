@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import comparisons, geo
+from app.api import cars, comparisons, geo
 from app.core.config import settings
 from app.db.session import Base, engine
-from app.models import comparison  # noqa: F401  (registers the table on Base)
+from app.models import car_profile, comparison  # noqa: F401  (registers the tables on Base)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -19,7 +19,7 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:8001"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,6 +27,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(comparisons.router)
+app.include_router(cars.router)
 app.include_router(geo.router)
 
 

@@ -3,7 +3,9 @@ import InteractiveMap from './components/InteractiveMap'
 import Sidebar from './components/Sidebar'
 import ComparisonResults from './components/ComparisonResults'
 import HistoryList from './components/HistoryList'
+import CarsPage from './components/CarsPage'
 import { useApi } from './hooks/useApi'
+import { useCars } from './hooks/useCars'
 import { calculateRoadDistance } from './utils/geoData'
 import { CURRENCIES, useCurrency } from './utils/currency'
 import { LANGUAGES, useI18n } from './i18n/LanguageContext'
@@ -11,14 +13,21 @@ import PillToggle from './components/PillToggle'
 import {
   Compass,
   Car,
+  CarFront,
   Train,
   Bus,
   History,
   Leaf,
 } from 'lucide-react'
 
+const NAV_TABS = [
+  { tab: 'planner', labelKey: 'nav.map', icon: Compass },
+  { tab: 'history', labelKey: 'nav.history', icon: History },
+  { tab: 'cars', labelKey: 'nav.cars', icon: CarFront },
+]
+
 function App() {
-  const [activeTab, setActiveTab] = useState('planner') // 'planner' | 'results' | 'history'
+  const [activeTab, setActiveTab] = useState('planner') // 'planner' | 'results' | 'history' | 'cars'
   // Results is a detail page, not a nav tab: remember which tab opened it for "Back" and highlighting
   const [resultsFrom, setResultsFrom] = useState('planner')
   const [originCity, setOriginCity] = useState('Warsaw')
@@ -26,6 +35,7 @@ function App() {
   const [lastComparison, setLastComparison] = useState(null)
 
   const { post, loading, error } = useApi()
+  const cars = useCars()
   const { currency, setCurrency } = useCurrency()
   const { lang, setLang, t, stableText } = useI18n()
   const otherCurrency = currency === 'EUR' ? 'PLN' : 'EUR'
@@ -118,29 +128,21 @@ function App() {
 
               {/* Nav Tabs */}
               <nav className="flex items-center gap-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 text-xs font-semibold">
-                <button
-                  onClick={() => setActiveTab('planner')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                    navTab === 'planner'
-                      ? 'bg-primary-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                  }`}
-                >
-                  <Compass className="w-4 h-4" />
-                  {stableText('nav.map')}
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('history')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                    navTab === 'history'
-                      ? 'bg-primary-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                  }`}
-                >
-                  <History className="w-4 h-4" />
-                  {stableText('nav.history')}
-                </button>
+                {NAV_TABS.map(({ tab, labelKey, icon: Icon }) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    aria-current={navTab === tab ? 'page' : undefined}
+                    className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                      navTab === tab
+                        ? 'bg-primary-600 text-white shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {stableText(labelKey)}
+                  </button>
+                ))}
               </nav>
             </div>
           </div>
@@ -167,6 +169,10 @@ function App() {
               error={error}
               hasResults={Boolean(lastComparison)}
               onShowResults={() => showResults('planner')}
+              cars={cars.cars}
+              selectedCar={cars.selectedCar}
+              onSelectCar={cars.selectCar}
+              onManageCars={() => setActiveTab('cars')}
             />
 
             {/* Focal Point: Interactive Map Component */}
@@ -198,6 +204,25 @@ function App() {
             <HistoryList
               onViewComparison={handleViewHistorical}
               onStartComparing={() => setActiveTab('planner')}
+            />
+          </div>
+        )}
+
+        {/* TAB 4: SAVED CAR PRESETS */}
+        {activeTab === 'cars' && (
+          <div className="max-w-3xl mx-auto bg-white text-slate-900 rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-200">
+            <CarsPage
+              cars={cars.cars}
+              loaded={cars.loaded}
+              error={cars.error}
+              selectedCar={cars.selectedCar}
+              onCreate={async (data) => {
+                // A newly added car is most likely the one the user wants to compare with
+                const car = await cars.createCar(data)
+                cars.selectCar(car.id)
+              }}
+              onUpdate={cars.updateCar}
+              onDelete={cars.deleteCar}
             />
           </div>
         )}

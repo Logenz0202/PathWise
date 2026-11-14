@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { useI18n } from '../i18n/LanguageContext'
 import { MODES, MODE_KEYS } from '../utils/transport'
-import { fuelProfile } from '../utils/vehicle'
+import { comparisonCarLabel, fuelProfile } from '../utils/vehicle'
 import { useCurrency } from '../utils/currency'
 
 const METRICS = [
@@ -50,6 +50,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
   const carProfile = fuelProfile(comparison.car_fuel_type)
   const { formatMoney } = useCurrency()
   const { t, formatNumber, formatDuration } = useI18n()
+  const carLabel = comparisonCarLabel(comparison, t)
   const fmt = { formatMoney, formatNumber, formatDuration }
   const options = MODE_KEYS.map((key) => ({ key, data: comparison[key] })).filter(({ data }) => data)
 
@@ -176,6 +177,12 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
                 <div>
                   <h3 className="text-xl font-black text-slate-900">{t(mode.labelKey)}</h3>
                   <p className="text-xs text-slate-400 font-medium">{t('results.avgSpeed', { speed: `~${mode.speedKmh} km/h` })}</p>
+                  {/* Which car the cost and emissions were calculated for */}
+                  {key === 'car' && (
+                    <p className="mt-0.5 text-xs font-semibold text-blue-700 truncate" title={carLabel}>
+                      {carLabel}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -254,6 +261,9 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
             <Car className="w-4 h-4 text-primary-600" />
             {t('results.carParams')}
+            <span className="normal-case tracking-normal font-semibold text-slate-800 bg-white border border-slate-200 rounded-md px-2 py-0.5">
+              {carLabel}
+            </span>
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div className="bg-white p-3 rounded-xl border border-slate-200">

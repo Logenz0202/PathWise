@@ -3,11 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import cars, comparisons, geo
 from app.core.config import settings
+from app.db.migrations import upgrade_schema
 from app.db.session import Base, engine
 from app.models import car_profile, comparison  # noqa: F401  (registers the tables on Base)
 
-# Create tables
+# Create missing tables, then add any columns introduced since an existing database was created
 Base.metadata.create_all(bind=engine)
+upgrade_schema(engine)
 
 app = FastAPI(
     title=settings.APP_NAME,

@@ -46,8 +46,9 @@ export default function Sidebar({
       origin: originCity,
       destination: destinationCity,
       distance_km: effectiveDistance,
-      // No car selected: leave these out and the backend uses average car figures
+      // Average cars send typical specs without a name; saved presets also send their name
       ...(selectedCar && {
+        car_name: selectedCar.isAverage ? undefined : selectedCar.name,
         car_fuel_type: selectedCar.fuel_type,
         car_consumption_l_per_100km: selectedCar.consumption_per_100km,
         car_fuel_price_per_liter: selectedCar.energy_price_eur,

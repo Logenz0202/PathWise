@@ -1,24 +1,39 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useApi } from './useApi'
+import { FUEL_PROFILES } from '../utils/vehicle'
 
 const SELECTED_KEY = 'pathwise.selectedCar'
 
-function readSelected() {
+// Built-in "average car" per fuel type, using the typical values from FUEL_PROFILES.
+// They look like saved cars to the rest of the app, but have a string id and no name.
+export const AVERAGE_CARS = Object.entries(FUEL_PROFILES).map(([fuel, profile]) => ({
+  id: `avg:${fuel}`,
+  isAverage: true,
+  name: null,
+  fuel_type: fuel,
+  consumption_per_100km: parseFloat(profile.consumption),
+  energy_price_eur: parseFloat(profile.price.EUR),
+}))
+
+const DEFAULT_SELECTION = AVERAGE_CARS[0].id // average petrol car
+
+// Selection is stored as "avg:<fuel>" for an average car or "car:<id>" for a saved preset
+const savedCarKey = (car) => `car:${car.id}`
+
+function readSelection() {
   try {
-    const id = Number(localStorage.getItem(SELECTED_KEY))
-    return Number.isInteger(id) && id > 0 ? id : null
+    return localStorage.getItem(SELECTED_KEY) || DEFAULT_SELECTION
   } catch {
-    return null
+    return DEFAULT_SELECTION
   }
 }
 
-// Saved car presets (CRUD against /api/cars) plus which one is used for comparisons.
-// `selectedCar` is null for "average car", which lets the backend use typical figures.
+// Saved car presets (CRUD against /api/cars) plus which car (preset or average) comparisons use.
 export function useCars() {
   const { get, post, put, delete: del, error } = useApi()
   const [cars, setCars] = useState([])
   const [loaded, setLoaded] = useState(false)
-  const [selectedId, setSelectedId] = useState(readSelected)
+  const [selection, setSelection] = useState(readSelection)
 
   useEffect(() => {
     get('/cars/')
@@ -29,18 +44,21 @@ export function useCars() {
 
   useEffect(() => {
     try {
-      if (selectedId) localStorage.setItem(SELECTED_KEY, String(selectedId))
-      else localStorage.removeItem(SELECTED_KEY)
+      localStorage.setItem(SELECTED_KEY, selection)
     } catch {
       // Storage unavailable: the selection just won't persist
     }
-  }, [selectedId])
+  }, [selection])
 
-  // A remembered car that no longer exists falls back to "average car"
-  const selectedCar = cars.find((c) => c.id === selectedId) ?? null
+  const selectedCar =
+    AVERAGE_CARS.find((c) => c.id === selection) ?? cars.find((c) => savedCarKey(c) === selection) ?? null
+
+  // A remembered preset that no longer exists (or an unknown value) falls back to the default average
   useEffect(() => {
-    if (loaded && selectedId && !selectedCar) setSelectedId(null)
-  }, [loaded, selectedId, selectedCar])
+    if (loaded && !selectedCar) setSelection(DEFAULT_SELECTION)
+  }, [loaded, selectedCar])
+
+  const selectCar = useCallback((car) => setSelection(car.isAverage ? car.id : savedCarKey(car)), [])
 
   const createCar = useCallback(
     async (data) => {
@@ -68,5 +86,5 @@ export function useCars() {
     [del]
   )
 
-  return { cars, loaded, error, selectedCar, selectCar: setSelectedId, createCar, updateCar, deleteCar }
+  return { cars, loaded, error, selectedCar, selectCar, createCar, updateCar, deleteCar }
 }

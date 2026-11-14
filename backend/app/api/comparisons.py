@@ -54,6 +54,7 @@ async def create_comparison(
         origin=request.origin,
         destination=request.destination,
         distance_km=distance_km,
+        car_name=request.car_name,
         car_fuel_type=request.car_fuel_type,
         car_consumption_l_per_100km=request.car_consumption_l_per_100km,
         car_fuel_price_per_liter=request.car_fuel_price_per_liter,

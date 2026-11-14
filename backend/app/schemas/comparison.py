@@ -11,7 +11,8 @@ class ComparisonRequest(BaseModel):
     destination: str = Field(..., description="Destination city")
     distance_km: Optional[float] = Field(None, gt=0, description="Distance in kilometers (auto-calculated if omitted)")
 
-    # Car configuration
+    # Car configuration (all empty = average car)
+    car_name: Optional[str] = Field(None, max_length=60, description="Name of the car preset used")
     car_fuel_type: Optional[str] = Field(None, description="Fuel type: petrol, diesel, lpg, electric")
     # Field names say "liter" for historical reasons (they're also DB columns); for electric cars
     # the values are kWh/100km and EUR/kWh
@@ -45,13 +46,14 @@ class ComparisonListResponse(BaseModel):
     car: Optional[TransportOption]
     train: Optional[TransportOption]
     bus: Optional[TransportOption]
+    car_name: Optional[str]
+    car_fuel_type: Optional[str]
     created_at: datetime
 
 
 class ComparisonResponse(ComparisonListResponse):
     """Full comparison, including the car profile and the AI recommendation."""
 
-    car_fuel_type: Optional[str]
     car_consumption_l_per_100km: Optional[float]
     car_fuel_price_per_liter: Optional[float]
     ai_recommendation: Optional[str]

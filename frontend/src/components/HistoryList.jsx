@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useApi } from '../hooks/useApi'
-import { Clock, Trash2, ChevronRight } from 'lucide-react'
+import { Car, Clock, Trash2, ChevronRight } from 'lucide-react'
 import { useCurrency } from '../utils/currency'
 import { useI18n } from '../i18n/LanguageContext'
 import { MODES, MODE_KEYS } from '../utils/transport'
+import { comparisonCarLabel } from '../utils/vehicle'
 
 export default function HistoryList({ onViewComparison, onStartComparing }) {
   const { get, delete: del, loading, error } = useApi()
@@ -109,6 +110,11 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {timeAgo(comparison.created_at)}
+                  </span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1 min-w-0">
+                    <Car className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{comparisonCarLabel(comparison, t)}</span>
                   </span>
                 </div>
               </div>

@@ -19,3 +19,14 @@ export function describeCar(car, { t, formatNumber, formatMoney }) {
   const { labelKey, unit } = fuelProfile(car.fuel_type)
   return `${t(labelKey)} · ${formatNumber(car.consumption_per_100km)} ${unit}/100km · ${formatMoney(car.energy_price_eur)}/${unit}`
 }
+
+// Which car a saved comparison used: the preset's name, the average car of its fuel type when
+// no preset was used, or "average car" when no car data was sent at all
+export function comparisonCarLabel(comparison, t) {
+  if (comparison.car_name) return comparison.car_name
+  if (comparison.car_fuel_type) return t(`car.avg.${comparison.car_fuel_type}`)
+  return t('car.average')
+}
+
+// Name shown for a selectable car: the preset's own name, or "Average diesel car" etc.
+export const carDisplayName = (car, t) => (car.isAverage ? t(`car.avg.${car.fuel_type}`) : car.name)

@@ -219,7 +219,7 @@ function App() {
               onCreate={async (data) => {
                 // A newly added car is most likely the one the user wants to compare with
                 const car = await cars.createCar(data)
-                cars.selectCar(car.id)
+                cars.selectCar(car)
               }}
               onUpdate={cars.updateCar}
               onDelete={cars.deleteCar}

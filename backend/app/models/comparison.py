@@ -20,7 +20,9 @@ class Comparison(Base):
     destination = Column(String, nullable=False)
     distance_km = Column(Float, nullable=False)
 
-    # Car specific
+    # Car used (copied from the selected preset, so it survives renaming/deleting the preset;
+    # all empty means the average-car estimate was used)
+    car_name = Column(String, nullable=True)
     car_fuel_type = Column(String, nullable=True)
     car_consumption_l_per_100km = Column(Float, nullable=True)
     car_fuel_price_per_liter = Column(Float, nullable=True)

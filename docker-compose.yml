@@ -28,6 +28,8 @@ services:
       OPENROUTER_MODEL: google/gemma-4-26b-a4b-it
       APP_NAME: PathWise
       DEBUG: "true"
+      # ./backend is mounted into the container; keep compiled .pyc files out of the project folder
+      PYTHONDONTWRITEBYTECODE: "1"
     ports:
       - "8001:8000"
     volumes:

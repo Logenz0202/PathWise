@@ -26,30 +26,34 @@ BASE_COSTS_PER_KM = {
 }
 
 
+# kg CO2 per unit of energy burned: litres for combustion fuels, kWh for electric
+CO2_PER_UNIT = {
+    "petrol": 2.31,
+    "diesel": 2.68,
+    "lpg": 1.51,
+    # Charging from the grid isn't emission-free; ~EU average generation mix
+    "electric": 0.25,
+}
+
+
 def calculate_car_costs(
     distance_km: float,
     fuel_type: Optional[str],
-    consumption_l_per_100km: Optional[float],
-    fuel_price_per_liter: Optional[float]
+    consumption_per_100km: Optional[float],
+    price_per_unit: Optional[float]
 ) -> tuple[float, float]:
-    """Calculate car cost and CO2 based on fuel parameters."""
-    if not all([fuel_type, consumption_l_per_100km, fuel_price_per_liter]):
+    """Calculate car cost and CO2 from the car profile.
+
+    Units follow the fuel type: L/100km and EUR/L for petrol, diesel and LPG;
+    kWh/100km and EUR/kWh for electric.
+    """
+    if not all([fuel_type, consumption_per_100km, price_per_unit]):
         # Default estimates
         return distance_km * 0.12, distance_km * EMISSION_FACTORS[TransportMode.CAR]
 
-    # Fuel consumption for the trip
-    fuel_needed_l = (distance_km / 100) * consumption_l_per_100km
-    cost = fuel_needed_l * fuel_price_per_liter
-
-    # CO2 varies by fuel type
-    co2_per_liter = {
-        "petrol": 2.31,
-        "diesel": 2.68,
-        "lpg": 1.51,
-        "electric": 0.0,  # Depends on grid, simplified
-    }.get(fuel_type.lower(), 2.31)
-
-    co2_kg = fuel_needed_l * co2_per_liter
+    energy_used = (distance_km / 100) * consumption_per_100km
+    cost = energy_used * price_per_unit
+    co2_kg = energy_used * CO2_PER_UNIT.get(fuel_type.lower(), CO2_PER_UNIT["petrol"])
     return cost, co2_kg
 
 

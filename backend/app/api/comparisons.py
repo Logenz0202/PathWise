@@ -44,6 +44,7 @@ async def create_comparison(
         car=results["car"],
         train=results["train"],
         bus=results["bus"],
+        car_fuel_type=request.car_fuel_type,
     )
 
     # Save to database

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { calculateRoadDistance, searchCities } from '../utils/geoData'
 import { formatDuration } from '../utils/format'
+import { FUEL_PROFILES, fuelProfile } from '../utils/vehicle'
 import {
   MapPin,
   ArrowUpDown,
@@ -18,14 +19,10 @@ import {
   Sliders,
   Route,
   Info,
+  Zap,
 } from 'lucide-react'
 
-const FUEL_TYPES = [
-  { value: 'petrol', label: 'Petrol', icon: Fuel },
-  { value: 'diesel', label: 'Diesel', icon: Fuel },
-  { value: 'lpg', label: 'LPG', icon: Gauge },
-  { value: 'electric', label: 'Electric', icon: Car },
-]
+const FUEL_ICONS = { petrol: Fuel, diesel: Fuel, lpg: Gauge, electric: Zap }
 
 export default function Sidebar({
   originCity,
@@ -55,9 +52,16 @@ export default function Sidebar({
   // Car configuration
   const [carConfig, setCarConfig] = useState({
     fuelType: 'petrol',
-    consumption: '7.2',
-    price: '1.75',
+    consumption: FUEL_PROFILES.petrol.consumption,
+    price: FUEL_PROFILES.petrol.price,
   })
+  const profile = fuelProfile(carConfig.fuelType)
+
+  // Units differ between fuels (L vs kWh), so switching type loads that type's typical values
+  const selectFuelType = (fuelType) => {
+    const { consumption, price } = fuelProfile(fuelType)
+    setCarConfig({ fuelType, consumption, price })
+  }
 
   // Sync inputs with selected props
   useEffect(() => {
@@ -339,7 +343,7 @@ export default function Sidebar({
                     placeholder={`Default: ${autoDistance}`}
                     onChange={(e) => setManualDistance(e.target.value)}
                     min="1"
-                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                   />
                 </div>
               )}
@@ -407,54 +411,65 @@ export default function Sidebar({
                 <div>
                   <label className="block font-medium text-slate-600 mb-1.5">Fuel Type</label>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {FUEL_TYPES.map(({ value, label, icon: Icon }) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setCarConfig((prev) => ({ ...prev, fuelType: value }))}
-                        className={`p-2 rounded-lg border flex items-center gap-2 transition-all ${
-                          carConfig.fuelType === value
-                            ? 'border-primary-500 bg-primary-50/80 text-primary-900 font-bold shadow-sm'
-                            : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
-                        }`}
-                      >
-                        <Icon className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{label}</span>
-                      </button>
-                    ))}
+                    {Object.entries(FUEL_PROFILES).map(([value, { label }]) => {
+                      const Icon = FUEL_ICONS[value]
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => selectFuelType(value)}
+                          className={`p-2 rounded-lg border flex items-center gap-2 transition-all ${
+                            carConfig.fuelType === value
+                              ? 'border-primary-500 bg-primary-50/80 text-primary-900 font-bold shadow-sm'
+                              : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{label}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
                 {/* Consumption & Price */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block font-medium text-slate-600 mb-1">
-                      Consumption (L/100km)
-                    </label>
-                    <input
-                      type="number"
-                      value={carConfig.consumption}
-                      onChange={(e) =>
-                        setCarConfig((prev) => ({ ...prev, consumption: e.target.value }))
-                      }
-                      step="0.1"
-                      min="0.1"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-slate-600 mb-1">Fuel Price (€/L)</label>
-                    <input
-                      type="number"
-                      value={carConfig.price}
-                      onChange={(e) =>
-                        setCarConfig((prev) => ({ ...prev, price: e.target.value }))
-                      }
-                      step="0.01"
-                      min="0.01"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
-                    />
-                  </div>
+                  <label className="block">
+                    <span className="block font-medium text-slate-600 mb-1">Consumption</span>
+                    <span className="relative block">
+                      <input
+                        type="number"
+                        value={carConfig.consumption}
+                        onChange={(e) =>
+                          setCarConfig((prev) => ({ ...prev, consumption: e.target.value }))
+                        }
+                        step="0.1"
+                        min="0.1"
+                        className="w-full pl-2.5 pr-20 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        {profile.unit}/100km
+                      </span>
+                    </span>
+                  </label>
+                  <label className="block">
+                    <span className="block font-medium text-slate-600 mb-1">{profile.priceLabel}</span>
+                    <span className="relative block">
+                      <input
+                        type="number"
+                        value={carConfig.price}
+                        onChange={(e) =>
+                          setCarConfig((prev) => ({ ...prev, price: e.target.value }))
+                        }
+                        step="0.01"
+                        min="0.01"
+                        className="w-full pl-2.5 pr-14 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        €/{profile.unit}
+                      </span>
+                    </span>
+                  </label>
                 </div>
               </div>
             )}

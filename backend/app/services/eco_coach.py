@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import httpx
 
@@ -21,14 +22,15 @@ class EcoCoachService:
         distance_km: float,
         car: TransportOption,
         train: TransportOption,
-        bus: TransportOption
+        bus: TransportOption,
+        car_fuel_type: Optional[str] = None,
     ) -> str:
         """Get AI recommendation for transport choice."""
 
         if not self.api_key:
             return self._fallback_recommendation(car, train, bus)
 
-        prompt = self._build_prompt(origin, destination, distance_km, car, train, bus)
+        prompt = self._build_prompt(origin, destination, distance_km, car, train, bus, car_fuel_type)
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -68,13 +70,15 @@ class EcoCoachService:
         distance_km: float,
         car: TransportOption,
         train: TransportOption,
-        bus: TransportOption
+        bus: TransportOption,
+        car_fuel_type: Optional[str] = None,
     ) -> str:
+        car_label = f"Car ({car_fuel_type})" if car_fuel_type else "Car"
         return f"""
 Trip: {origin} → {destination} ({distance_km} km)
 
 Options:
-🚗 Car: {car.time_minutes:.0f} min, €{car.cost_eur:.2f}, {car.co2_kg:.1f} kg CO₂
+🚗 {car_label}: {car.time_minutes:.0f} min, €{car.cost_eur:.2f}, {car.co2_kg:.1f} kg CO₂
 🚂 Train: {train.time_minutes:.0f} min, €{train.cost_eur:.2f}, {train.co2_kg:.1f} kg CO₂
 🚌 Bus: {bus.time_minutes:.0f} min, €{bus.cost_eur:.2f}, {bus.co2_kg:.1f} kg CO₂
 

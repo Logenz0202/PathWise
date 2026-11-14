@@ -10,6 +10,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { formatDuration } from '../utils/format'
+import { fuelProfile } from '../utils/vehicle'
 
 const TRANSPORT_CONFIG = {
   car: {
@@ -82,6 +83,7 @@ function renderBold(line) {
 }
 
 export default function ComparisonResults({ comparison, onBack, backLabel }) {
+  const carProfile = fuelProfile(comparison.car_fuel_type)
   const options = [
     { key: 'car', data: comparison.car },
     { key: 'train', data: comparison.train },
@@ -285,20 +287,18 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div className="bg-white p-3 rounded-xl border border-slate-200">
               <span className="text-slate-400 block mb-0.5">Fuel Type</span>
-              <span className="font-bold text-slate-800 capitalize">
-                {comparison.car_fuel_type}
-              </span>
+              <span className="font-bold text-slate-800">{carProfile.label}</span>
             </div>
             <div className="bg-white p-3 rounded-xl border border-slate-200">
               <span className="text-slate-400 block mb-0.5">Average Consumption</span>
               <span className="font-bold text-slate-800">
-                {comparison.car_consumption_l_per_100km} L / 100km
+                {comparison.car_consumption_l_per_100km} {carProfile.unit} / 100km
               </span>
             </div>
             <div className="bg-white p-3 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block mb-0.5">Fuel Price</span>
+              <span className="text-slate-400 block mb-0.5">{carProfile.priceLabel}</span>
               <span className="font-bold text-slate-800">
-                €{comparison.car_fuel_price_per_liter} / L
+                €{Number(comparison.car_fuel_price_per_liter).toFixed(2)} / {carProfile.unit}
               </span>
             </div>
           </div>

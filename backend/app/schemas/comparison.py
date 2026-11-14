@@ -13,8 +13,14 @@ class ComparisonRequest(BaseModel):
 
     # Car configuration
     car_fuel_type: Optional[str] = Field(None, description="Fuel type: petrol, diesel, lpg, electric")
-    car_consumption_l_per_100km: Optional[float] = Field(None, gt=0, description="Fuel consumption in L/100km")
-    car_fuel_price_per_liter: Optional[float] = Field(None, gt=0, description="Fuel price per liter in EUR")
+    # Field names say "liter" for historical reasons (they're also DB columns); for electric cars
+    # the values are kWh/100km and EUR/kWh
+    car_consumption_l_per_100km: Optional[float] = Field(
+        None, gt=0, description="Consumption per 100 km: litres, or kWh for electric"
+    )
+    car_fuel_price_per_liter: Optional[float] = Field(
+        None, gt=0, description="Energy price in EUR per litre, or per kWh for electric"
+    )
 
 
 class TransportOption(BaseModel):

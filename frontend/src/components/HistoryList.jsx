@@ -157,8 +157,8 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
               </div>
             </div>
 
-            {/* Quick preview of results */}
-            <div className="flex flex-wrap gap-2">
+            {/* Quick preview of results: one fixed column per mode so they never wrap into a second row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {['car', 'train', 'bus'].map((key) => {
                 const config = TRANSPORT_CONFIG[key]
                 const option = comparison[key]
@@ -166,12 +166,18 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
 
                 const Icon = config.icon
                 return (
-                  <div key={key} title={config.label} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${config.bg} text-xs`}>
-                    <Icon className={`w-4 h-4 ${config.color}`} />
-                    <span className="font-medium text-gray-900">{formatDuration(option.time_minutes)}</span>
-                    <span className="text-gray-500">
-                      {formatMoney(option.cost_eur)} · {option.co2_kg.toFixed(1)} kg CO₂
-                    </span>
+                  <div
+                    key={key}
+                    title={config.label}
+                    className={`flex items-center gap-2.5 min-w-0 px-3 py-2 rounded-lg ${config.bg} text-xs`}
+                  >
+                    <Icon className={`w-4 h-4 shrink-0 ${config.color}`} />
+                    <div className="min-w-0">
+                      <div className="font-semibold text-gray-900">{formatDuration(option.time_minutes)}</div>
+                      <div className="text-gray-500 truncate">
+                        {formatMoney(option.cost_eur)} · {option.co2_kg.toFixed(1)} kg CO₂
+                      </div>
+                    </div>
                   </div>
                 )
               })}

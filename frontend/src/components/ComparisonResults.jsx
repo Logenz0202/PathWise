@@ -84,7 +84,7 @@ function renderBold(line) {
   )
 }
 
-export default function ComparisonResults({ comparison, onBack }) {
+export default function ComparisonResults({ comparison, onBack, backLabel }) {
   const options = [
     { key: 'car', data: comparison.car },
     { key: 'train', data: comparison.train },
@@ -114,7 +114,7 @@ export default function ComparisonResults({ comparison, onBack }) {
           className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-all flex items-center gap-2 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Interactive Map</span>
+          <span>{backLabel}</span>
         </button>
 
         <div className="text-center sm:text-right">

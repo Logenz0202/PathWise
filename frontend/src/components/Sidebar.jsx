@@ -15,7 +15,6 @@ import {
   ChevronUp,
   X,
   Sliders,
-  History,
   Route,
   Info,
 } from 'lucide-react'
@@ -38,7 +37,6 @@ export default function Sidebar({
   error,
   hasResults,
   onShowResults,
-  onShowHistory,
 }) {
   const [showCarDetails, setShowCarDetails] = useState(false)
   const [showManualDistance, setShowManualDistance] = useState(false)
@@ -111,7 +109,7 @@ export default function Sidebar({
     <aside className="w-full lg:w-96 flex flex-col bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden shrink-0">
       {/* Sidebar Header & Navigation */}
       <div className="p-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white border-b border-slate-700">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-primary-600 rounded-lg">
               <Route className="w-5 h-5 text-white" />
@@ -124,31 +122,13 @@ export default function Sidebar({
 
           {hasResults && (
             <button
+              type="button"
               onClick={onShowResults}
               className="text-xs px-2.5 py-1 bg-primary-600 hover:bg-primary-500 rounded-lg font-medium transition-colors flex items-center gap-1 shadow-sm"
             >
               <span>View Results</span>
             </button>
           )}
-        </div>
-
-        {/* View Toggle Tabs */}
-        <div className="flex p-1 bg-slate-950/60 rounded-xl text-xs font-medium">
-          <button
-            type="button"
-            className="flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 bg-primary-600 text-white shadow-sm font-semibold"
-          >
-            <Route className="w-3.5 h-3.5" />
-            <span>Route Setup</span>
-          </button>
-          <button
-            type="button"
-            onClick={onShowHistory}
-            className="flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-white"
-          >
-            <History className="w-3.5 h-3.5" />
-            <span>Trip History</span>
-          </button>
         </div>
       </div>
 

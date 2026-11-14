@@ -10,14 +10,14 @@ import {
   Car,
   Train,
   Bus,
-  Sparkles,
   History,
-  Route,
   Leaf,
 } from 'lucide-react'
 
 function App() {
   const [activeTab, setActiveTab] = useState('planner') // 'planner' | 'results' | 'history'
+  // Results is a detail page, not a nav tab: remember which tab opened it for "Back" and highlighting
+  const [resultsFrom, setResultsFrom] = useState('planner')
   const [originCity, setOriginCity] = useState('Warsaw')
   const [destinationCity, setDestinationCity] = useState('Berlin')
   const [lastComparison, setLastComparison] = useState(null)
@@ -45,7 +45,7 @@ function App() {
     try {
       const result = await post('/comparisons/', payload)
       setLastComparison(result)
-      setActiveTab('results')
+      showResults('planner')
     } catch (err) {
       console.error('Comparison error:', err)
     }
@@ -56,8 +56,15 @@ function App() {
     setLastComparison(comparison)
     setOriginCity(comparison.origin)
     setDestinationCity(comparison.destination)
+    showResults('history')
+  }
+
+  const showResults = (from) => {
+    setResultsFrom(from)
     setActiveTab('results')
   }
+
+  const navTab = activeTab === 'results' ? resultsFrom : activeTab
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-primary-500 selection:text-white">
@@ -91,7 +98,7 @@ function App() {
               <button
                 onClick={() => setActiveTab('planner')}
                 className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                  activeTab === 'planner'
+                  navTab === 'planner'
                     ? 'bg-primary-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
@@ -100,24 +107,10 @@ function App() {
                 <span>Interactive Map</span>
               </button>
 
-              {lastComparison && (
-                <button
-                  onClick={() => setActiveTab('results')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                    activeTab === 'results'
-                      ? 'bg-primary-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 text-emerald-400" />
-                  <span>Results</span>
-                </button>
-              )}
-
               <button
                 onClick={() => setActiveTab('history')}
                 className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                  activeTab === 'history'
+                  navTab === 'history'
                     ? 'bg-primary-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
@@ -146,8 +139,7 @@ function App() {
               loading={loading}
               error={error}
               hasResults={Boolean(lastComparison)}
-              onShowResults={() => setActiveTab('results')}
-              onShowHistory={() => setActiveTab('history')}
+              onShowResults={() => showResults('planner')}
             />
 
             {/* Focal Point: Interactive Map Component */}
@@ -168,7 +160,8 @@ function App() {
         {activeTab === 'results' && lastComparison && (
           <ComparisonResults
             comparison={lastComparison}
-            onBack={() => setActiveTab('planner')}
+            backLabel={resultsFrom === 'history' ? 'Back to History' : 'Back to Interactive Map'}
+            onBack={() => setActiveTab(resultsFrom)}
           />
         )}
 

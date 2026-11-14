@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useApi } from '../hooks/useApi'
-import { Car, Train, Bus, Clock, Trash2, ChevronRight } from 'lucide-react'
+import { Clock, Trash2, ChevronRight } from 'lucide-react'
 import { useCurrency } from '../utils/currency'
 import { useI18n } from '../i18n/LanguageContext'
-
-const TRANSPORT_CONFIG = {
-  car: { icon: Car, color: 'text-blue-600', bg: 'bg-blue-50', labelKey: 'mode.car' },
-  train: { icon: Train, color: 'text-red-600', bg: 'bg-red-50', labelKey: 'mode.train' },
-  bus: { icon: Bus, color: 'text-amber-600', bg: 'bg-amber-50', labelKey: 'mode.bus' },
-}
+import { MODES, MODE_KEYS } from '../utils/transport'
 
 export default function HistoryList({ onViewComparison, onStartComparing }) {
   const { get, delete: del, loading, error } = useApi()
@@ -18,17 +13,10 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
   const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
-    loadHistory()
-  }, [])
-
-  const loadHistory = async () => {
-    try {
-      const data = await get('/comparisons/')
-      setComparisons(data)
-    } catch (err) {
-      console.error('Failed to load history:', err)
-    }
-  }
+    get('/comparisons/')
+      .then(setComparisons)
+      .catch((err) => console.error('Failed to load history:', err))
+  }, [get])
 
   const handleDelete = async (e, id) => {
     e.stopPropagation() // the button sits inside the clickable card
@@ -146,19 +134,19 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
 
             {/* Quick preview of results: one fixed column per mode so they never wrap into a second row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {['car', 'train', 'bus'].map((key) => {
-                const config = TRANSPORT_CONFIG[key]
+              {MODE_KEYS.map((key) => {
+                const mode = MODES[key]
                 const option = comparison[key]
                 if (!option) return null
 
-                const Icon = config.icon
+                const Icon = mode.icon
                 return (
                   <div
                     key={key}
-                    title={t(config.labelKey)}
-                    className={`flex items-center gap-2.5 min-w-0 px-3 py-2 rounded-lg ${config.bg} text-xs`}
+                    title={t(mode.labelKey)}
+                    className={`flex items-center gap-2.5 min-w-0 px-3 py-2 rounded-lg ${mode.soft} text-xs`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 ${config.color}`} />
+                    <Icon className={`w-4 h-4 shrink-0 ${mode.text}`} />
                     <div className="min-w-0">
                       <div className="font-semibold text-gray-900">{formatDuration(option.time_minutes)}</div>
                       <div className="text-gray-500 truncate">

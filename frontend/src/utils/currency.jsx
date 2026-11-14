@@ -3,7 +3,7 @@ import { useI18n } from '../i18n/LanguageContext'
 
 // All prices are calculated and stored in EUR; this only changes how they're shown and entered.
 // Fixed rate for the MVP; keep in sync with EUR_TO_PLN_RATE in backend/app/core/config.py.
-export const EUR_TO_PLN = 4.25
+const EUR_TO_PLN = 4.25
 
 // `amount` is already formatted for the language (72.07 / 72,07); Polish puts € after the amount
 export const CURRENCIES = {

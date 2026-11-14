@@ -19,11 +19,12 @@ PathWise/
 │       └── services/       # Calculator, AI Eco-Coach, geo lookups
 ├── frontend/               # React + Vite + Tailwind CSS + Leaflet
 │   └── src/
-│       ├── components/     # Map, sidebar, results, history
+│       ├── components/     # Map, sidebar, car settings, results, history
 │       ├── data/           # Generated city list (cities.json)
 │       ├── hooks/          # API client hook
+│       ├── i18n/           # English / Polish text and formatting
 │       ├── styles/
-│       └── utils/          # City search and distance helpers
+│       └── utils/          # Cities, currency, fuel profiles, transport modes
 ├── scripts/                # build_cities.mjs (regenerates the city lists)
 ├── docker-compose.yml      # Full application orchestration (DB + BE + FE)
 └── README.md
@@ -31,11 +32,12 @@ PathWise/
 
 ## 💡 Key Features & Creative Twist
 
-1. **Personalized Car Costs:** Users can configure their car's fuel type and average consumption (e.g., `7.5 l/100km`). The backend dynamically calculates precise fuel costs for any given route.
-2. **Multi-Criteria Calculation:** For any city-to-city trip, the algorithm compares options (Car, Train, Bus) across time, cost, and CO2 emissions.
-3. **AI Eco Coach (OpenRouter):** After computing hard metrics, the system sends them to an LLM via OpenRouter. AI generates a personalized expert recommendation (Time-to-Money vs. Ecology). Includes a built-in offline fallback mode if no API key is provided.
-4. **Full CRUD & History:** Save, browse, and delete searched comparisons using a local PostgreSQL database.
-5. **Visual Route Representation:** Color-coded distinction between different transport options.
+1. **Interactive Map:** Pick start and destination by clicking any of ~1,700 cities on an OpenStreetMap map (Poland and its neighbours), or search by name, including Polish names like *Praga* or *Kijów*.
+2. **Personalized Car Costs:** Set your car's fuel type (petrol, diesel, LPG or electric), consumption and fuel price. Units follow the fuel type (L/100km or kWh/100km), and EV emissions use the grid's CO2 intensity.
+3. **Multi-Criteria Comparison:** For any city-to-city trip, compare Car, Train and Bus across travel time, cost and CO2 emissions.
+4. **AI Eco Coach (OpenRouter):** The computed numbers are sent to an LLM via OpenRouter for a personalized recommendation (time vs. money vs. ecology). Without an API key, a built-in offline recommendation is used instead.
+5. **History:** Comparisons are saved in PostgreSQL; browse, reopen and delete them.
+6. **English / Polish and EUR / PLN:** Switch language and currency from the header. Prices are calculated in EUR and converted at a fixed rate; numbers and the AI's answer follow the chosen language.
 
 ## 🛠️ Setup & Execution (Docker + PostgreSQL)
 
@@ -63,9 +65,10 @@ That's it! Docker will automatically spin up:
 
 ## 🗺️ Roadmap / Future Features
 - [x] Interactive map on OpenStreetMap tiles (Leaflet) with ~1,700 clickable cities.
+- [x] English / Polish interface and EUR / PLN prices.
+- [ ] Polish display names for cities in the Polish interface (search already accepts them).
 - [ ] Database module for gas stations and Electric Vehicle (EV) charging points along the route.
 - [ ] User accounts and favorite saved routes tracking.
-
 
 ## 🏙️ City Data
 

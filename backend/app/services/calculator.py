@@ -11,20 +11,21 @@ EMISSION_FACTORS = {
     TransportMode.BUS: 0.089,  # Coach bus
 }
 
-# Average speeds (km/h)
+# Average speeds (km/h); mirrored as speedKmh in frontend/src/utils/transport.js for live estimates
 AVERAGE_SPEEDS = {
     TransportMode.CAR: 80,
     TransportMode.TRAIN: 120,
     TransportMode.BUS: 70,
 }
 
-# Base costs per km (EUR)
-BASE_COSTS_PER_KM = {
-    TransportMode.CAR: 0.0,  # Calculated from fuel
+# Ticket cost per km for public transport (EUR); car cost comes from the car profile
+FARE_PER_KM = {
     TransportMode.TRAIN: 0.15,
     TransportMode.BUS: 0.08,
 }
 
+# Car estimate when no car profile is given (EUR per km)
+DEFAULT_CAR_COST_PER_KM = 0.12
 
 # kg CO2 per unit of energy burned: litres for combustion fuels, kWh for electric
 CO2_PER_UNIT = {
@@ -48,8 +49,7 @@ def calculate_car_costs(
     kWh/100km and EUR/kWh for electric.
     """
     if not all([fuel_type, consumption_per_100km, price_per_unit]):
-        # Default estimates
-        return distance_km * 0.12, distance_km * EMISSION_FACTORS[TransportMode.CAR]
+        return distance_km * DEFAULT_CAR_COST_PER_KM, distance_km * EMISSION_FACTORS[TransportMode.CAR]
 
     energy_used = (distance_km / 100) * consumption_per_100km
     cost = energy_used * price_per_unit
@@ -73,7 +73,7 @@ def calculate_transport_option(
             distance_km, car_fuel_type, car_consumption_l_per_100km, car_fuel_price_per_liter
         )
     else:
-        cost = distance_km * BASE_COSTS_PER_KM[mode]
+        cost = distance_km * FARE_PER_KM[mode]
         co2 = distance_km * EMISSION_FACTORS[mode]
 
     return TransportOption(

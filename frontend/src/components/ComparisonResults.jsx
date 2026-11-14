@@ -1,7 +1,5 @@
 import {
   Car,
-  Train,
-  Bus,
   Clock,
   Wallet,
   Leaf,
@@ -10,41 +8,9 @@ import {
   Zap,
 } from 'lucide-react'
 import { useI18n } from '../i18n/LanguageContext'
+import { MODES, MODE_KEYS } from '../utils/transport'
 import { fuelProfile } from '../utils/vehicle'
 import { useCurrency } from '../utils/currency'
-
-const TRANSPORT_CONFIG = {
-  car: {
-    icon: Car,
-    color: 'bg-blue-600',
-    borderColor: 'border-blue-500',
-    lightBg: 'bg-blue-50/70',
-    badgeBg: 'bg-blue-100 text-blue-800',
-    textColor: 'text-blue-700',
-    labelKey: 'mode.car',
-    speed: '~80 km/h',
-  },
-  train: {
-    icon: Train,
-    color: 'bg-red-600',
-    borderColor: 'border-red-500',
-    lightBg: 'bg-red-50/70',
-    badgeBg: 'bg-red-100 text-red-800',
-    textColor: 'text-red-700',
-    labelKey: 'mode.train',
-    speed: '~120 km/h',
-  },
-  bus: {
-    icon: Bus,
-    color: 'bg-amber-600',
-    borderColor: 'border-amber-500',
-    lightBg: 'bg-amber-50/70',
-    badgeBg: 'bg-amber-100 text-amber-800',
-    textColor: 'text-amber-700',
-    labelKey: 'mode.bus',
-    speed: '~70 km/h',
-  },
-}
 
 const METRICS = [
   {
@@ -85,11 +51,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
   const { formatMoney } = useCurrency()
   const { t, formatNumber, formatDuration } = useI18n()
   const fmt = { formatMoney, formatNumber, formatDuration }
-  const options = [
-    { key: 'car', data: comparison.car },
-    { key: 'train', data: comparison.train },
-    { key: 'bus', data: comparison.bus },
-  ].filter(({ data }) => data)
+  const options = MODE_KEYS.map((key) => ({ key, data: comparison[key] })).filter(({ data }) => data)
 
   // Find best for each metric
   const best = {}
@@ -169,8 +131,8 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
       {/* 3 Main Comparison Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {options.map(({ key, data }) => {
-          const config = TRANSPORT_CONFIG[key]
-          const Icon = config.icon
+          const mode = MODES[key]
+          const Icon = mode.icon
           const isFastest = best['time_minutes'] === key
           const isCheapest = best['cost_eur'] === key
           const isGreenest = best['co2_kg'] === key
@@ -208,12 +170,12 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
 
               {/* Mode Header */}
               <div className="flex items-center gap-3 mb-6">
-                <div className={`p-3.5 rounded-xl text-white shadow-md ${config.color}`}>
+                <div className={`p-3.5 rounded-xl text-white shadow-md ${mode.solid}`}>
                   <Icon className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900">{t(config.labelKey)}</h3>
-                  <p className="text-xs text-slate-400 font-medium">{t('results.avgSpeed', { speed: config.speed })}</p>
+                  <h3 className="text-xl font-black text-slate-900">{t(mode.labelKey)}</h3>
+                  <p className="text-xs text-slate-400 font-medium">{t('results.avgSpeed', { speed: `~${mode.speedKmh} km/h` })}</p>
                 </div>
               </div>
 
@@ -266,7 +228,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
                 <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      isGreenest ? 'bg-emerald-500' : key === 'bus' ? 'bg-amber-500' : 'bg-blue-500'
+                      isGreenest ? 'bg-emerald-500' : mode.bar
                     }`}
                     style={{
                       width: `${Math.max(12, Math.min(100, ((data.co2_kg || 1) / (maxCo2 || 1)) * 100))}%`,

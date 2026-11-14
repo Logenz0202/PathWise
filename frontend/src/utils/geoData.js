@@ -25,7 +25,7 @@ export function maxTierForZoom(zoom) {
 }
 
 // Highway corridor distances (km) for precision
-export const KNOWN_ROAD_DISTANCES = {
+const KNOWN_ROAD_DISTANCES = {
   'warsaw-berlin': 572,
   'warsaw-krakow': 295,
   'warsaw-wroclaw': 355,
@@ -79,7 +79,7 @@ export const POPULAR_ROUTES = [
   { origin: 'Gdańsk', destination: 'Warsaw', label: 'Gdańsk ⇄ Warsaw' },
 ]
 
-export const normalize = (s) =>
+const normalize = (s) =>
   s
     .toLowerCase()
     .trim()
@@ -121,7 +121,7 @@ export function searchCities(query, limit = 8) {
   return [...prefix, ...contains, ...country].slice(0, limit)
 }
 
-export function haversineKm(lat1, lng1, lat2, lng2) {
+function haversineKm(lat1, lng1, lat2, lng2) {
   const R = 6371
   const dLat = ((lat2 - lat1) * Math.PI) / 180
   const dLon = ((lng2 - lng1) * Math.PI) / 180

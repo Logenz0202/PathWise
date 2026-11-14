@@ -145,6 +145,7 @@ Open http://localhost:5173. The Vite dev server forwards `/api` requests to the 
 - [ ] Polish display names for cities in the Polish interface (search already accepts them).
 - [ ] Database module for gas stations and Electric Vehicle (EV) charging points along the route.
 - [ ] User accounts and favorite saved routes tracking.
+- [ ] Mobile app.
 
 ## 🏙️ City Data & Attribution
 

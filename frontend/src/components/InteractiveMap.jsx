@@ -153,8 +153,9 @@ export default function InteractiveMap({
   const [choiceCity, setChoiceCity] = useState(null)
   const [darkTiles, setDarkTiles] = useState(true)
 
-  // Canvas renderer keeps ~1.7k clickable markers fast
-  const canvasRenderer = useMemo(() => L.canvas({ padding: 0.5 }), [])
+  // Canvas renderer keeps ~1.7k clickable markers fast. `tolerance` widens each marker's
+  // click/hover area by that many pixels without changing how it looks.
+  const canvasRenderer = useMemo(() => L.canvas({ padding: 0.5, tolerance: 6 }), [])
 
   const originObj = useMemo(() => findCityByName(originCity), [originCity])
   const destObj = useMemo(() => findCityByName(destinationCity), [destinationCity])
@@ -207,7 +208,7 @@ export default function InteractiveMap({
 
   return (
     <div
-      className={`pw-map relative w-full h-full min-h-[580px] lg:min-h-[680px] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl ${
+      className={`pw-map relative isolate w-full h-full min-h-[580px] lg:min-h-[680px] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl ${
         darkTiles ? 'pw-dark-tiles' : ''
       }`}
     >

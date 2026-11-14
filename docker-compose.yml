@@ -44,6 +44,7 @@ services:
     container_name: pathwise-frontend
     environment:
       API_PROXY_TARGET: http://backend:8000
+      VITE_USE_POLLING: "true"
     ports:
       - "5173:5173"
     volumes:

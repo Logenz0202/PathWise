@@ -9,6 +9,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // File-change events don't cross a Windows/macOS -> Docker bind mount, so poll there
+    watch: { usePolling: process.env.VITE_USE_POLLING === 'true' },
     proxy: {
       '/api': {
         target: apiTarget,

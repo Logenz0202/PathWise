@@ -41,6 +41,10 @@ class Comparison(Base):
     bus_cost_eur = Column(Float, nullable=True)
     bus_co2_kg = Column(Float, nullable=True)
 
+    # What the advice was based on: the traveller's priority and optional note
+    priority = Column(String, nullable=True)
+    notes = Column(String, nullable=True)
+
     # AI recommendation: structured advice stored as JSON (older rows hold plain text)
     ai_recommendation = Column(String, nullable=True)
 

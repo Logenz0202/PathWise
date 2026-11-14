@@ -124,6 +124,19 @@ export const TRANSLATIONS = {
     'results.avgConsumption': 'Average Consumption',
     'results.averageCar': 'No car selected: the car estimate uses typical fuel cost and emissions.',
     'results.aiPick': 'AI pick',
+    'results.basedOn': 'Based on: {priority}',
+    'results.noteQuote': '“{note}”',
+    'results.accessTime': 'incl. ~{min} min to the station and waiting',
+
+    // Trip preferences
+    'prefs.priority': 'What matters most?',
+    'prefs.priorityShort': 'Priority:',
+    'prefs.balanced': 'Balanced',
+    'prefs.fastest': 'Fastest',
+    'prefs.cheapest': 'Cheapest',
+    'prefs.greenest': 'Greenest',
+    'prefs.notesLabel': 'Note for the Eco-Coach',
+    'prefs.notesPlaceholder': 'Anything else? e.g. lots of luggage, working on the way',
 
     // History
     'history.title': 'Comparison History',
@@ -258,6 +271,18 @@ export const TRANSLATIONS = {
     'results.avgConsumption': 'Średnie zużycie',
     'results.averageCar': 'Nie wybrano auta: koszt i emisja samochodu to wartości przeciętne.',
     'results.aiPick': 'Wybór AI',
+    'results.basedOn': 'Na podstawie: {priority}',
+    'results.noteQuote': '„{note}”',
+    'results.accessTime': 'w tym ~{min} min dojazdu i czekania',
+
+    'prefs.priority': 'Co jest najważniejsze?',
+    'prefs.priorityShort': 'Priorytet:',
+    'prefs.balanced': 'Balans',
+    'prefs.fastest': 'Szybko',
+    'prefs.cheapest': 'Tanio',
+    'prefs.greenest': 'Eko',
+    'prefs.notesLabel': 'Uwagi dla Eko-Coacha',
+    'prefs.notesPlaceholder': 'Coś jeszcze? np. dużo bagażu, chcę pracować w drodze',
 
     'history.title': 'Historia porównań',
     'history.saved': 'Zapisane: {count}',

@@ -10,6 +10,8 @@ from sqlalchemy import Engine, inspect, text
 # (table, column, SQL type) — nullable columns added after the table was first released
 ADDED_COLUMNS = [
     ("comparisons", "car_name", "VARCHAR"),
+    ("comparisons", "priority", "VARCHAR"),
+    ("comparisons", "notes", "VARCHAR"),
 ]
 
 

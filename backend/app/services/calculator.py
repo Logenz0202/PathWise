@@ -11,11 +11,19 @@ EMISSION_FACTORS = {
     TransportMode.BUS: 0.089,  # Coach bus
 }
 
-# Average speeds (km/h); mirrored as speedKmh in frontend/src/utils/transport.js for live estimates
+# Average speeds (km/h); mirrored as speedKmh in frontend/src/utils/transport.js
 AVERAGE_SPEEDS = {
     TransportMode.CAR: 80,
     TransportMode.TRAIN: 120,
     TransportMode.BUS: 70,
+}
+
+# Door-to-door overhead for public transport: getting to the station/stop and waiting (minutes).
+# Makes the car competitive on short trips. Mirrored as accessMinutes in frontend/src/utils/transport.js
+ACCESS_MINUTES = {
+    TransportMode.CAR: 0,
+    TransportMode.TRAIN: 40,
+    TransportMode.BUS: 30,
 }
 
 # Ticket cost per km for public transport (EUR); car cost comes from the car profile
@@ -64,9 +72,8 @@ def calculate_transport_option(
     car_consumption_l_per_100km: Optional[float] = None,
     car_fuel_price_per_liter: Optional[float] = None
 ) -> TransportOption:
-    """Calculate time, cost, and CO2 for a transport mode."""
-    speed = AVERAGE_SPEEDS[mode]
-    time_minutes = (distance_km / speed) * 60
+    """Calculate door-to-door time, cost, and CO2 for a transport mode."""
+    time_minutes = (distance_km / AVERAGE_SPEEDS[mode]) * 60 + ACCESS_MINUTES[mode]
 
     if mode == TransportMode.CAR:
         cost, co2 = calculate_car_costs(

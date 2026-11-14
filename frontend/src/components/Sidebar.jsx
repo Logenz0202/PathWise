@@ -6,6 +6,7 @@ import { MODES, MODE_KEYS } from '../utils/transport'
 import { useI18n } from '../i18n/LanguageContext'
 import CarPicker from './CarPicker'
 import CityInput from './CityInput'
+import TripPreferences from './TripPreferences'
 
 export default function Sidebar({
   originCity,
@@ -22,6 +23,10 @@ export default function Sidebar({
   selectedCar,
   onSelectCar,
   onManageCars,
+  priority,
+  onPriorityChange,
+  notes,
+  onNotesChange,
 }) {
   const [showManualDistance, setShowManualDistance] = useState(false)
   const [manualDistance, setManualDistance] = useState('')
@@ -36,7 +41,7 @@ export default function Sidebar({
   const effectiveDistance = showManualDistance && manualDistance ? parseFloat(manualDistance) : autoDistance
 
   // Rough travel-time estimate per mode, shown before comparing
-  const estimateMinutes = (key) => (effectiveDistance / MODES[key].speedKmh) * 60
+  const estimateMinutes = (key) => (effectiveDistance / MODES[key].speedKmh) * 60 + MODES[key].accessMinutes
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -46,6 +51,8 @@ export default function Sidebar({
       origin: originCity,
       destination: destinationCity,
       distance_km: effectiveDistance,
+      priority,
+      notes: notes.trim() || undefined,
       // Average cars send typical specs without a name; saved presets also send their name
       ...(selectedCar && {
         car_name: selectedCar.isAverage ? undefined : selectedCar.name,
@@ -90,7 +97,7 @@ export default function Sidebar({
       <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col text-sm">
         <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
           {/* Origin & Destination Inputs */}
-          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-3 relative">
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-3 relative">
             <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
               <span className="flex items-center gap-1">
                 <Info className="w-3.5 h-3.5 text-primary-500" />
@@ -215,7 +222,7 @@ export default function Sidebar({
           )}
         </div>
 
-        <div className="p-4 pt-3 border-t border-slate-200 bg-slate-50 space-y-3">
+        <div className="px-4 py-3 border-t border-slate-200 bg-slate-50 space-y-2">
           {/* Error Message */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">
@@ -224,6 +231,12 @@ export default function Sidebar({
           )}
 
           <CarPicker cars={cars} selectedCar={selectedCar} onSelect={onSelectCar} onManage={onManageCars} />
+          <TripPreferences
+            priority={priority}
+            onPriorityChange={onPriorityChange}
+            notes={notes}
+            onNotesChange={onNotesChange}
+          />
 
           {/* Submit Action Button */}
           <button

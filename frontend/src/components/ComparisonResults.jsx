@@ -124,6 +124,12 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
                 <>
                   <p className="text-lg font-bold text-white leading-snug">{advice.headline}</p>
                   <p className="text-slate-200 text-sm leading-relaxed">{advice.reason}</p>
+                  {comparison.priority && (
+                    <p className="text-xs text-emerald-300/80">
+                      {t('results.basedOn', { priority: t(`prefs.${comparison.priority}`) })}
+                      {comparison.notes && ` · ${t('results.noteQuote', { note: comparison.notes })}`}
+                    </p>
+                  )}
                   {advice.tips.length > 0 && (
                     <ul className="pt-1 space-y-1">
                       {advice.tips.map((tip, idx) => (
@@ -202,6 +208,9 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
                 <div>
                   <h3 className="text-xl font-black text-slate-900">{t(mode.labelKey)}</h3>
                   <p className="text-xs text-slate-400 font-medium">{t('results.avgSpeed', { speed: `~${mode.speedKmh} km/h` })}</p>
+                  {mode.accessMinutes > 0 && (
+                    <p className="text-[11px] text-slate-400">{t('results.accessTime', { min: mode.accessMinutes })}</p>
+                  )}
                   {/* Which car the cost and emissions were calculated for */}
                   {key === 'car' && (
                     <p className="mt-0.5 text-xs font-semibold text-blue-700 truncate" title={carLabel}>

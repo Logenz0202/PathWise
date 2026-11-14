@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Car, Check, ChevronUp, Settings2 } from 'lucide-react'
 import { carDisplayName, describeCar, fuelProfile } from '../utils/vehicle'
 import { AVERAGE_CARS } from '../hooks/useCars'
 import { useCurrency } from '../utils/currency'
 import { useI18n } from '../i18n/LanguageContext'
+import { useDismiss } from '../hooks/useDismiss'
 
 // Sidebar control for choosing the car the comparison uses: an average car per fuel type or one
 // of the user's saved presets. Opens a list above itself; presets are managed on the My cars page.
@@ -14,21 +15,8 @@ export default function CarPicker({ cars, selectedCar, onSelect, onManage }) {
   const rootRef = useRef(null)
   const fmt = { t, formatNumber, formatMoney }
 
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (e) => {
-      if (!rootRef.current?.contains(e.target)) setOpen(false)
-    }
-    const onKeyDown = (e) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
+  const close = useCallback(() => setOpen(false), [])
+  useDismiss(rootRef, open, close)
 
   const choose = (car) => {
     onSelect(car)

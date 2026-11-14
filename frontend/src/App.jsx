@@ -33,6 +33,9 @@ function App() {
   const [originCity, setOriginCity] = useState('Warsaw')
   const [destinationCity, setDestinationCity] = useState('Berlin')
   const [lastComparison, setLastComparison] = useState(null)
+  // Trip preferences for the Eco-Coach; kept here so they survive switching to results and back
+  const [priority, setPriority] = useState('balanced')
+  const [notes, setNotes] = useState('')
 
   const { post, loading, error } = useApi()
   const cars = useCars()
@@ -173,6 +176,10 @@ function App() {
               selectedCar={cars.selectedCar}
               onSelectCar={cars.selectCar}
               onManageCars={() => setActiveTab('cars')}
+              priority={priority}
+              onPriorityChange={setPriority}
+              notes={notes}
+              onNotesChange={setNotes}
             />
 
             {/* Focal Point: Interactive Map Component */}

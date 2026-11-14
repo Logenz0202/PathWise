@@ -5,14 +5,14 @@
 ## 💡 Features
 
 1. **Interactive map** – ~1,700 clickable cities (Poland and its neighbours) on OpenStreetMap. Smaller towns appear as you zoom in. Cities can also be searched by name, including Polish names such as *Praga* or *Kijów*.
-2. **Multi-criteria comparison** – car vs. train vs. bus across travel time, cost and CO₂, with the fastest, cheapest and greenest option highlighted.
+2. **Multi-criteria comparison** – car vs. train vs. bus across door-to-door travel time (train and bus include getting to the station and waiting, so the car can win short trips), cost and CO₂, with the fastest, cheapest and greenest option highlighted.
 3. **My Cars (car presets)** – save your own cars (name, fuel type, consumption, fuel/electricity price) and pick one in the planner; results and History show which car each comparison used. Petrol, diesel, LPG and electric are supported, with the right units (L/100km or kWh/100km). Without a selected car, PathWise uses an average car.
-4. **AI Eco-Coach** – the computed numbers and the chosen car are sent to an LLM (via OpenRouter), which returns structured advice: the recommended mode (marked "AI pick" on its card), a one-line headline, the reasoning and up to two practical tips. If no API key is configured or the reply is unusable, a rule-based coach returns advice in the same format, so the app always works.
+4. **AI Eco-Coach** – tell it what matters most (balanced, fastest, cheapest or greenest) and, optionally, anything else in your own words ("lots of luggage", "I want to work on the way"). Together with the computed numbers and the chosen car this goes to an LLM (via OpenRouter), which returns structured advice: the recommended mode (marked "AI pick" on its card), a one-line headline, the reasoning and up to two practical tips. If no API key is configured or the reply is unusable, a rule-based coach returns advice in the same format, so the app always works.
 5. **History** – every comparison is saved; reopen or delete past trips.
 6. **English / Polish and EUR / PLN** – switch language and currency from the header. Numbers and the AI's answer follow the chosen language.
 
 ### ✨ Creative twist
-The Eco-Coach turns raw numbers into a decision ("take the train: almost as fast, a third of the CO₂"). Emissions are realistic rather than flattering: an electric car is charged from the grid, so it is **not** shown as zero-emission.
+The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get a different answer depending on your priority or a note like "moving flat, lots of luggage" (→ the car, because it can carry your things). Emissions are realistic rather than flattering: an electric car is charged from the grid, so it is **not** shown as zero-emission.
 
 ## 🛠️ Tech Stack
 
@@ -28,11 +28,12 @@ The Eco-Coach turns raw numbers into a decision ("take the train: almost as fast
 ### Interesting solutions
 - **Layered backend** – `api/` (REST routes) → `services/` (calculator, AI coach, geo lookups) → `models/` + `schemas/` (SQLAlchemy tables, Pydantic validation).
 - **Structured, grounded AI output** – the LLM must answer with a JSON object (`recommended`, `headline`, `reason`, `tips`) that is validated with Pydantic before it is saved. The prompt gives it pre-formatted numbers and the pre-computed fastest/cheapest/greenest facts, so it explains the trade-off instead of doing (and possibly getting wrong) the maths.
+- **Free-text context, safely** – the traveller's note is passed to the model as quoted context with an instruction to ignore any instructions inside it (a simple prompt-injection guard), and is limited to 200 characters.
 - **AI with a safe fallback** – any OpenRouter problem (no key, network, quota, invalid reply) is logged and replaced by rule-based advice in the same structure and the user's language.
 - **1,700 markers without lag** – cities are drawn on a Leaflet canvas layer and filtered by zoom level and viewport, so only relevant markers are rendered.
 - **Reproducible city data** – `scripts/build_cities.mjs` builds the city list from the GeoNames dump: it removes districts listed as separate towns, ranks cities into zoom tiers and adds Polish names as search aliases.
 - **Comparisons keep their own copy of the car** – the preset's name and specs are copied into each saved comparison, so History stays accurate after a car is renamed or deleted.
-- **Small schema upgrades without a migration tool** – `db/migrations.py` adds columns introduced after a database was created (e.g. `comparisons.car_name`), safely on every startup.
+- **Small schema upgrades without a migration tool** – `db/migrations.py` adds columns introduced after a database was created (e.g. `comparisons.car_name`, `priority`, `notes`), safely on every startup.
 - **Money stored once** – all amounts are calculated and stored in EUR; the frontend converts to PLN for display and input at a fixed rate.
 - **Lightweight i18n** – a small React context (no extra library) for translations plus language-aware number, money and duration formatting.
 

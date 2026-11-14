@@ -37,6 +37,7 @@ async def create_comparison(
     )
 
     # Get AI recommendation
+    notes = (request.notes or "").strip() or None
     advice = await eco_coach.get_recommendation(
         origin=request.origin,
         destination=request.destination,
@@ -46,6 +47,8 @@ async def create_comparison(
         bus=results["bus"],
         car_fuel_type=request.car_fuel_type,
         car_name=request.car_name,
+        priority=request.priority,
+        notes=notes,
         currency=request.currency,
         language=request.language,
     )
@@ -56,6 +59,8 @@ async def create_comparison(
         destination=request.destination,
         distance_km=distance_km,
         car_name=request.car_name,
+        priority=request.priority,
+        notes=notes,
         car_fuel_type=request.car_fuel_type,
         car_consumption_l_per_100km=request.car_consumption_l_per_100km,
         car_fuel_price_per_liter=request.car_fuel_price_per_liter,

@@ -134,6 +134,7 @@ Open http://localhost:5173. The Vite dev server forwards `/api` requests to the 
 - **Claude Code (Anthropic)** – used as a pair programmer for everything after that:
   - replacing the hand-drawn SVG map with Leaflet + OpenStreetMap and writing the GeoNames city-list generator;
   - car presets as a full CRUD resource (API + My Cars page), electric-car units and emissions, EUR/PLN and English/Polish support;
+  - redesigning the Eco-Coach after testing its answers: structured JSON output validated before saving, a priority and free-text note from the traveller, door-to-door times, and moving the decision logic into the backend (size-based scoring) so the LLM explains a grounded choice instead of guessing — including fixing cases where it contradicted the numbers or gave tips for the wrong option;
   - UX changes (layout fitting laptop screens, history cards, header behaviour) based on my feedback;
   - code review and cleanup: removing dead code, de-duplicating components, fixing bugs found along the way (e.g. a startup error in the config, broken API paths, an invalid AI model id) and REST status codes.
 - I decided on the features and UX, reviewed the changes and tested the app in the browser on Docker after each step.

@@ -125,9 +125,12 @@ function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* TAB 1: INTERACTIVE MAP & ROUTE PLANNER (FOCAL POINT) */}
+        {/* TAB 1: INTERACTIVE MAP & ROUTE PLANNER (FOCAL POINT)
+            Desktop sizing (65px header + 48px padding + 65px footer):
+            - shorter than 900px: fill the screen below the header; footer sits fully below the fold
+            - 900px and taller: also leave room for the footer so it's fully visible; capped at 820px */}
         {activeTab === 'planner' && (
-          <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+          <div className="flex flex-col lg:flex-row gap-6 items-stretch lg:h-[calc(100vh-113px)] lg:min-h-[560px] lg:[@media(min-height:900px)]:h-[calc(100vh-178px)] lg:max-h-[820px]">
             {/* Sidebar Controls */}
             <Sidebar
               originCity={originCity}

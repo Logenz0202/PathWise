@@ -208,7 +208,7 @@ export default function InteractiveMap({
 
   return (
     <div
-      className={`pw-map relative isolate w-full h-full min-h-[580px] lg:min-h-[680px] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl ${
+      className={`pw-map relative isolate w-full h-full flex-1 min-h-[480px] lg:min-h-0 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl ${
         darkTiles ? 'pw-dark-tiles' : ''
       }`}
     >

@@ -132,9 +132,9 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Main Form Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Form: scrollable inputs above, Compare button pinned at the bottom so it's always visible */}
+      <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col text-sm">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
           {/* Origin & Destination Inputs */}
           <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-3 relative">
             <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
@@ -464,7 +464,9 @@ export default function Sidebar({
               </div>
             )}
           </div>
+        </div>
 
+        <div className="p-4 pt-3 border-t border-slate-200 bg-slate-50 space-y-3">
           {/* Error Message */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">
@@ -490,14 +492,8 @@ export default function Sidebar({
               </>
             )}
           </button>
-        </form>
-      </div>
-
-      {/* Footer subtle branding */}
-      <div className="p-3 bg-slate-50 border-t border-slate-200 text-center text-[11px] text-slate-400 flex items-center justify-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        <span>Connected to Central Europe Transit Engine</span>
-      </div>
+        </div>
+      </form>
     </aside>
   )
 }

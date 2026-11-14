@@ -44,7 +44,10 @@ FALLBACK_TEXT = {
         "reason": "Fastest: {fast} ({time}). Cheapest: {cheap} ({cost}). Greenest: {green} ({co2}).",
         # Tips are always about the recommended option
         "tips": {
-            "train": ["Book early: train fares are usually cheaper in advance.", "Allow about {access} min to reach the station."],
+            "train": [
+                "Book early: train fares are usually cheaper in advance.",
+                "Allow about {access} min to reach the station.",
+            ],
             "bus": ["Book early for the cheapest seats.", "Allow about {access} min to reach the stop."],
             "car": ["Travelling with others? The car's {cost} can be split between you."],
             "electric": ["Charge before you set off and plan a charging stop on longer routes."],
@@ -63,8 +66,14 @@ FALLBACK_TEXT = {
         },
         "reason": "Najszybciej: {fast} ({time}). Najtaniej: {cheap} ({cost}). Najmniejsza emisja: {green} ({co2}).",
         "tips": {
-            "train": ["Kup bilet wcześniej: zwykle jest tańszy.", "Zarezerwuj ok. {access} min na dotarcie na dworzec."],
-            "bus": ["Kup bilet wcześniej, by trafić na najtańsze miejsca.", "Zarezerwuj ok. {access} min na dotarcie na przystanek."],
+            "train": [
+                "Kup bilet wcześniej: zwykle jest tańszy.",
+                "Zarezerwuj ok. {access} min na dotarcie na dworzec.",
+            ],
+            "bus": [
+                "Kup bilet wcześniej, by trafić na najtańsze miejsca.",
+                "Zarezerwuj ok. {access} min na dotarcie na przystanek.",
+            ],
             "car": ["Jedziesz z kimś? Koszt auta ({cost}) możecie podzielić."],
             "electric": ["Naładuj auto przed wyjazdem i zaplanuj postój na ładowanie na dłuższej trasie."],
         },

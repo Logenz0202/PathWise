@@ -1,5 +1,7 @@
 # 🌍 PathWise – Smart Transport Comparison & Planner
 
+[![CI](https://github.com/Logenz0202/PathWise/actions/workflows/ci.yml/badge.svg)](https://github.com/Logenz0202/PathWise/actions/workflows/ci.yml)
+
 **PathWise** is a full-stack MVP for comparing how to make a trip between two cities in Central and Eastern Europe — by **car, train or bus** — on **travel time, cost and CO₂ emissions**. Pick the cities on an interactive map, choose one of your saved cars, and an **AI Eco-Coach** explains which option fits best depending on whether you care most about speed, money or the planet.
 
 ## 💡 Features
@@ -24,6 +26,7 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 | AI | LLM via the **OpenRouter** API (model configurable, default `google/gemma-4-26b-a4b-it`) |
 | Data | City list generated from **GeoNames**; map tiles from **OpenStreetMap** |
 | Infrastructure | Docker Compose (database + API + frontend) |
+| Quality | **pytest** + pytest-cov, **ruff**, GitHub Actions CI |
 
 ### Interesting solutions
 - **Layered backend** – `api/` (REST routes) → `services/` (calculator, AI coach, geo lookups) → `models/` + `schemas/` (SQLAlchemy tables, Pydantic validation).
@@ -62,14 +65,15 @@ Invalid input returns `422` with the offending fields; unknown ids return `404`.
 ```text
 PathWise/
 ├── backend/                # Python + FastAPI + SQLAlchemy
-│   └── app/
-│       ├── api/            # REST routes: cars, comparisons, geo
-│       ├── core/           # Settings (environment variables)
-│       ├── data/           # Generated city list (cities.json)
-│       ├── db/             # Database session
-│       ├── models/         # SQLAlchemy models
-│       ├── schemas/        # Request / response validation
-│       └── services/       # Calculator, AI Eco-Coach, geo lookups
+│   ├── app/
+│   │   ├── api/            # REST routes: cars, comparisons, geo
+│   │   ├── core/           # Settings (environment variables)
+│   │   ├── data/           # Generated city list (cities.json)
+│   │   ├── db/             # Database session
+│   │   ├── models/         # SQLAlchemy models
+│   │   ├── schemas/        # Request / response validation
+│   │   └── services/       # Calculator, AI Eco-Coach, geo lookups
+│   └── tests/              # pytest: unit tests for services, API tests on PostgreSQL
 ├── frontend/               # React + Vite + Tailwind CSS + Leaflet
 │   └── src/
 │       ├── components/     # Map, sidebar, car picker, My Cars, results, history
@@ -78,6 +82,7 @@ PathWise/
 │       ├── i18n/           # English / Polish text and formatting
 │       ├── styles/
 │       └── utils/          # Cities, currency, fuel profiles, transport modes
+├── .github/workflows/      # CI: lint + tests, frontend build, Docker build
 ├── scripts/                # build_cities.mjs (regenerates the city lists)
 ├── docker-compose.yml      # Database + API + frontend
 └── README.md
@@ -127,6 +132,26 @@ npm run dev
 ```
 
 Open http://localhost:5173. The Vite dev server forwards `/api` requests to the API on port 8001.
+
+## 🧪 Tests & CI
+
+The backend has ~80 pytest tests (≈99% coverage):
+- **Unit tests** for the calculator, distance lookup and Eco-Coach: the decision logic (priorities and the size-based balanced score), formatting, parsing and validating the model's reply, the offline fallback, and the LLM call itself with a mocked HTTP transport (valid advice is used; HTTP errors, network errors and invalid replies fall back to offline advice). No network access or API key needed.
+- **API tests** for every endpoint, run with FastAPI's `TestClient` against a real PostgreSQL database: CRUD flows, `201`/`204`/`404`/`422` responses, history order and paging, the legacy plain-text recommendation and the CORS rules.
+
+API tests use a separate `pathwise_test` database (created automatically on the `db` container), so your own data is never touched:
+
+```bash
+docker compose up -d db
+cd backend
+pip install -r requirements-dev.txt
+pytest --cov
+ruff check .
+```
+
+Set `TEST_DATABASE_URL` to use another PostgreSQL server.
+
+**GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every push to `main` and every pull request: ruff + pytest with coverage against a PostgreSQL service container, a production build of the frontend, and a build of the Docker images.
 
 ## 🤖 How AI Tools Were Used
 

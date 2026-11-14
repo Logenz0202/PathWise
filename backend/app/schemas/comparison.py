@@ -5,7 +5,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.comparison import TransportMode
 
-
 Priority = Literal["balanced", "fastest", "cheapest", "greenest"]
 
 

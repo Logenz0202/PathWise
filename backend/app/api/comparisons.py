@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.comparison import Comparison
 from app.schemas.comparison import (
+    ComparisonListResponse,
     ComparisonRequest,
     ComparisonResponse,
-    ComparisonListResponse,
 )
 from app.services.calculator import calculate_comparison
 from app.services.eco_coach import eco_coach

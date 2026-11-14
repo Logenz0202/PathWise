@@ -3,7 +3,6 @@ from typing import Optional
 from app.models.comparison import TransportMode
 from app.schemas.comparison import TransportOption
 
-
 # Emission factors (kg CO2 per km per passenger)
 EMISSION_FACTORS = {
     TransportMode.CAR: 0.171,  # Average petrol car

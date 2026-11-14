@@ -1,0 +1,105 @@
+import pytest
+from sqlalchemy.orm import Session
+
+from app.models.comparison import Comparison
+
+TRIP = {"origin": "Warsaw", "destination": "Krakow"}
+
+
+def test_create_comparison_calculates_distance_options_and_advice(client):
+    response = client.post("/api/comparisons/", json=TRIP)
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["distance_km"] == 295.0  # known corridor, filled in by the API
+    for mode in ("car", "train", "bus"):
+        assert body[mode]["mode"] == mode
+        assert body[mode]["time_minutes"] > 0 and body[mode]["cost_eur"] > 0
+    assert body["priority"] == "balanced"
+    assert body["ai_advice"]["recommended"] in {"car", "train", "bus"}
+    assert body["ai_advice"]["headline"]
+    assert body["ai_text"] is None
+
+
+def test_create_comparison_with_car_profile_and_preferences(client):
+    response = client.post(
+        "/api/comparisons/",
+        json={
+            **TRIP,
+            "distance_km": 100,
+            "car_name": "Tesla",
+            "car_fuel_type": "electric",
+            "car_consumption_l_per_100km": 18,
+            "car_fuel_price_per_liter": 0.3,
+            "priority": "cheapest",
+            "notes": "  travelling with a dog  ",
+            "currency": "PLN",
+            "language": "pl",
+        },
+    )
+
+    body = response.json()
+    assert body["distance_km"] == 100
+    assert body["car"]["cost_eur"] == 5.4  # 18 kWh * 0.30 EUR; amounts stay in EUR
+    assert body["car_name"] == "Tesla"
+    assert body["notes"] == "travelling with a dog"  # trimmed before saving
+    # Cheapest is the electric car; offline advice is written in Polish with PLN amounts
+    assert body["ai_advice"]["recommended"] == "car"
+    assert "zł" in body["ai_advice"]["reason"]
+
+
+def test_list_get_and_delete_comparisons(client):
+    first = client.post("/api/comparisons/", json=TRIP).json()
+    second = client.post("/api/comparisons/", json={"origin": "Berlin", "destination": "Prague"}).json()
+
+    listed = client.get("/api/comparisons/").json()
+    assert [c["id"] for c in listed] == [second["id"], first["id"]]  # newest first
+    assert "ai_advice" not in listed[0]  # the list is a summary
+
+    assert client.get(f"/api/comparisons/{first['id']}").json() == first
+
+    assert client.delete(f"/api/comparisons/{first['id']}").status_code == 204
+    assert client.get(f"/api/comparisons/{first['id']}").status_code == 404
+    assert [c["id"] for c in client.get("/api/comparisons/").json()] == [second["id"]]
+
+
+def test_list_supports_paging(client):
+    ids = [client.post("/api/comparisons/", json=TRIP).json()["id"] for _ in range(3)]
+
+    page = client.get("/api/comparisons/", params={"skip": 1, "limit": 1}).json()
+    assert [c["id"] for c in page] == [ids[1]]
+
+
+def test_missing_comparison_returns_404(client):
+    assert client.get("/api/comparisons/999").status_code == 404
+    assert client.delete("/api/comparisons/999").status_code == 404
+
+
+def test_old_plain_text_recommendation_is_returned_as_text(client, db_engine):
+    # Rows saved before the advice became structured JSON hold plain text
+    with Session(db_engine) as session:
+        row = Comparison(origin="A", destination="B", distance_km=10, ai_recommendation="Take the train.")
+        session.add(row)
+        session.commit()
+        row_id = row.id
+
+    body = client.get(f"/api/comparisons/{row_id}").json()
+    assert body["ai_advice"] is None
+    assert body["ai_text"] == "Take the train."
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        {"origin": None},
+        {"distance_km": 0},
+        {"priority": "scenic"},
+        {"notes": "x" * 201},
+        {"currency": "USD"},
+        {"language": "de"},
+        {"car_consumption_l_per_100km": -1},
+    ],
+)
+def test_invalid_comparison_is_rejected(client, override):
+    assert client.post("/api/comparisons/", json={**TRIP, **override}).status_code == 422
+    assert client.get("/api/comparisons/").json() == []

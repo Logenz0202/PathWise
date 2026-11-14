@@ -123,6 +123,7 @@ export const TRANSLATIONS = {
     'results.fuelType': 'Fuel Type',
     'results.avgConsumption': 'Average Consumption',
     'results.averageCar': 'No car selected: the car estimate uses typical fuel cost and emissions.',
+    'results.aiPick': 'AI pick',
 
     // History
     'history.title': 'Comparison History',
@@ -256,6 +257,7 @@ export const TRANSLATIONS = {
     'results.fuelType': 'Rodzaj paliwa',
     'results.avgConsumption': 'Średnie zużycie',
     'results.averageCar': 'Nie wybrano auta: koszt i emisja samochodu to wartości przeciętne.',
+    'results.aiPick': 'Wybór AI',
 
     'history.title': 'Historia porównań',
     'history.saved': 'Zapisane: {count}',

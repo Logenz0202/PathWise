@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Sparkles,
   Zap,
+  Lightbulb,
 } from 'lucide-react'
 import { useI18n } from '../i18n/LanguageContext'
 import { MODES, MODE_KEYS } from '../utils/transport'
@@ -51,6 +52,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
   const { formatMoney } = useCurrency()
   const { t, formatNumber, formatDuration } = useI18n()
   const carLabel = comparisonCarLabel(comparison, t)
+  const advice = comparison.ai_advice
   const fmt = { formatMoney, formatNumber, formatDuration }
   const options = MODE_KEYS.map((key) => ({ key, data: comparison[key] })).filter(({ data }) => data)
 
@@ -98,7 +100,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
       </div>
 
       {/* AI Eco-Coach Recommendation */}
-      {comparison.ai_recommendation && (
+      {(advice || comparison.ai_text) && (
         <div className="bg-gradient-to-br from-emerald-900 via-slate-900 to-slate-950 text-white p-6 rounded-2xl shadow-xl border border-emerald-500/30 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -117,13 +119,30 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
                   </span>
                 )}
               </div>
-              <div className="text-slate-200 text-sm leading-relaxed space-y-1">
-                {comparison.ai_recommendation.split('\n').map((line, idx) => (
-                  <p key={idx} className={line.startsWith('🏆') ? 'font-bold text-white text-base' : ''}>
-                    {renderBold(line)}
-                  </p>
-                ))}
-              </div>
+
+              {advice ? (
+                <>
+                  <p className="text-lg font-bold text-white leading-snug">{advice.headline}</p>
+                  <p className="text-slate-200 text-sm leading-relaxed">{advice.reason}</p>
+                  {advice.tips.length > 0 && (
+                    <ul className="pt-1 space-y-1">
+                      {advice.tips.map((tip, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-sm text-emerald-100/90">
+                          <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" />
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              ) : (
+                // Comparisons saved before structured advice: plain text with **bold** markers
+                <div className="text-slate-200 text-sm leading-relaxed space-y-1">
+                  {comparison.ai_text.split('\n').map((line, idx) => (
+                    <p key={idx}>{renderBold(line)}</p>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -149,6 +168,12 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
             >
               {/* Badges */}
               <div className="flex flex-wrap gap-1.5 mb-4">
+                {advice?.recommended === key && (
+                  <span className="px-2.5 py-1 text-xs font-bold bg-violet-100 text-violet-900 rounded-lg flex items-center gap-1 shadow-sm">
+                    <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                    {t('results.aiPick')}
+                  </span>
+                )}
                 {isFastest && (
                   <span className="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-900 rounded-lg flex items-center gap-1 shadow-sm">
                     <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />

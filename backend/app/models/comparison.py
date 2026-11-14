@@ -1,4 +1,5 @@
 import enum
+import json
 
 from sqlalchemy import Column, DateTime, Float, Integer, String
 from sqlalchemy.sql import func
@@ -40,7 +41,7 @@ class Comparison(Base):
     bus_cost_eur = Column(Float, nullable=True)
     bus_co2_kg = Column(Float, nullable=True)
 
-    # AI Recommendation
+    # AI recommendation: structured advice stored as JSON (older rows hold plain text)
     ai_recommendation = Column(String, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -69,3 +70,18 @@ class Comparison(Base):
     @property
     def bus(self) -> dict | None:
         return self._option(TransportMode.BUS)
+
+    def _stored_advice(self) -> dict | None:
+        try:
+            data = json.loads(self.ai_recommendation or "")
+        except ValueError:
+            return None
+        return data if isinstance(data, dict) else None
+
+    @property
+    def ai_advice(self) -> dict | None:
+        return self._stored_advice()
+
+    @property
+    def ai_text(self) -> str | None:
+        return None if self._stored_advice() is not None else self.ai_recommendation

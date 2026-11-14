@@ -37,7 +37,7 @@ async def create_comparison(
     )
 
     # Get AI recommendation
-    ai_recommendation = await eco_coach.get_recommendation(
+    advice = await eco_coach.get_recommendation(
         origin=request.origin,
         destination=request.destination,
         distance_km=distance_km,
@@ -45,6 +45,7 @@ async def create_comparison(
         train=results["train"],
         bus=results["bus"],
         car_fuel_type=request.car_fuel_type,
+        car_name=request.car_name,
         currency=request.currency,
         language=request.language,
     )
@@ -67,7 +68,7 @@ async def create_comparison(
         bus_time_minutes=results["bus"].time_minutes,
         bus_cost_eur=results["bus"].cost_eur,
         bus_co2_kg=results["bus"].co2_kg,
-        ai_recommendation=ai_recommendation,
+        ai_recommendation=advice.model_dump_json(),
     )
 
     db.add(comparison)

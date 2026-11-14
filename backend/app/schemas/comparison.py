@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -25,6 +25,15 @@ class ComparisonRequest(BaseModel):
     # Only affect how the AI recommendation is written; all amounts are EUR
     currency: Literal["EUR", "PLN"] = Field("EUR", description="Currency for the recommendation text")
     language: Literal["en", "pl"] = Field("en", description="Language for the recommendation text")
+
+
+class Advice(BaseModel):
+    """The Eco-Coach's structured recommendation (from the LLM, or the offline fallback)."""
+
+    recommended: TransportMode
+    headline: str = Field(..., min_length=1, max_length=160)
+    reason: str = Field(..., min_length=1, max_length=600)
+    tips: List[str] = Field(default_factory=list, max_length=2)
 
 
 class TransportOption(BaseModel):
@@ -56,4 +65,6 @@ class ComparisonResponse(ComparisonListResponse):
 
     car_consumption_l_per_100km: Optional[float]
     car_fuel_price_per_liter: Optional[float]
-    ai_recommendation: Optional[str]
+    ai_advice: Optional[Advice]
+    # Plain-text recommendation saved by earlier versions (before structured advice)
+    ai_text: Optional[str]

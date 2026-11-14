@@ -9,6 +9,13 @@ from app.schemas.comparison import TransportOption
 logger = logging.getLogger("uvicorn.error")
 
 
+def format_money(eur: float, currency: str = "EUR") -> str:
+    """Format an EUR amount in the user's display currency."""
+    if currency == "PLN":
+        return f"{eur * settings.EUR_TO_PLN_RATE:.2f} zł"
+    return f"€{eur:.2f}"
+
+
 class EcoCoachService:
     def __init__(self):
         self.api_key = settings.OPENROUTER_API_KEY
@@ -24,13 +31,14 @@ class EcoCoachService:
         train: TransportOption,
         bus: TransportOption,
         car_fuel_type: Optional[str] = None,
+        currency: str = "EUR",
     ) -> str:
         """Get AI recommendation for transport choice."""
 
         if not self.api_key:
-            return self._fallback_recommendation(car, train, bus)
+            return self._fallback_recommendation(car, train, bus, currency)
 
-        prompt = self._build_prompt(origin, destination, distance_km, car, train, bus, car_fuel_type)
+        prompt = self._build_prompt(origin, destination, distance_km, car, train, bus, car_fuel_type, currency)
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -61,7 +69,7 @@ class EcoCoachService:
         except Exception as exc:
             # Any API problem (network, quota, bad model ID) falls back to the offline advice
             logger.warning("Eco-Coach AI request failed, using offline fallback: %s", exc)
-            return self._fallback_recommendation(car, train, bus)
+            return self._fallback_recommendation(car, train, bus, currency)
 
     def _build_prompt(
         self,
@@ -72,15 +80,16 @@ class EcoCoachService:
         train: TransportOption,
         bus: TransportOption,
         car_fuel_type: Optional[str] = None,
+        currency: str = "EUR",
     ) -> str:
         car_label = f"Car ({car_fuel_type})" if car_fuel_type else "Car"
         return f"""
 Trip: {origin} → {destination} ({distance_km} km)
 
 Options:
-🚗 {car_label}: {car.time_minutes:.0f} min, €{car.cost_eur:.2f}, {car.co2_kg:.1f} kg CO₂
-🚂 Train: {train.time_minutes:.0f} min, €{train.cost_eur:.2f}, {train.co2_kg:.1f} kg CO₂
-🚌 Bus: {bus.time_minutes:.0f} min, €{bus.cost_eur:.2f}, {bus.co2_kg:.1f} kg CO₂
+🚗 {car_label}: {car.time_minutes:.0f} min, {format_money(car.cost_eur, currency)}, {car.co2_kg:.1f} kg CO₂
+🚂 Train: {train.time_minutes:.0f} min, {format_money(train.cost_eur, currency)}, {train.co2_kg:.1f} kg CO₂
+🚌 Bus: {bus.time_minutes:.0f} min, {format_money(bus.cost_eur, currency)}, {bus.co2_kg:.1f} kg CO₂
 
 Provide a concise recommendation (2-3 sentences) considering:
 - Time vs money trade-off
@@ -92,7 +101,8 @@ Provide a concise recommendation (2-3 sentences) considering:
         self,
         car: TransportOption,
         train: TransportOption,
-        bus: TransportOption
+        bus: TransportOption,
+        currency: str = "EUR",
     ) -> str:
         """Offline fallback recommendation logic."""
         options = [
@@ -111,7 +121,7 @@ Provide a concise recommendation (2-3 sentences) considering:
 
         lines = [
             f"🏃 **Fastest**: {fastest[0]} ({fastest[1]:.0f} min)",
-            f"💰 **Cheapest**: {cheapest[0]} (€{cheapest[2]:.2f})",
+            f"💰 **Cheapest**: {cheapest[0]} ({format_money(cheapest[2], currency)})",
             f"🌱 **Greenest**: {greenest[0]} ({greenest[3]:.1f} kg CO₂)",
         ]
 

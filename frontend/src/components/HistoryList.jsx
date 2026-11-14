@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useApi } from '../hooks/useApi'
 import { Car, Train, Bus, Clock, Trash2, ChevronRight } from 'lucide-react'
 import { formatDuration } from '../utils/format'
+import { useCurrency } from '../utils/currency'
 
 function formatTimeAgo(dateStr) {
   if (!dateStr) return ''
@@ -25,6 +26,7 @@ const TRANSPORT_CONFIG = {
 
 export default function HistoryList({ onViewComparison, onStartComparing }) {
   const { get, delete: del, loading, error } = useApi()
+  const { formatMoney } = useCurrency()
   const [comparisons, setComparisons] = useState([])
   const [deletingId, setDeletingId] = useState(null)
 
@@ -168,7 +170,7 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
                     <Icon className={`w-4 h-4 ${config.color}`} />
                     <span className="font-medium text-gray-900">{formatDuration(option.time_minutes)}</span>
                     <span className="text-gray-500">
-                      €{option.cost_eur.toFixed(2)} · {option.co2_kg.toFixed(1)} kg CO₂
+                      {formatMoney(option.cost_eur)} · {option.co2_kg.toFixed(1)} kg CO₂
                     </span>
                   </div>
                 )

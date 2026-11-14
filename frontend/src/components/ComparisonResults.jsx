@@ -3,7 +3,7 @@ import {
   Train,
   Bus,
   Clock,
-  Euro,
+  Wallet,
   Leaf,
   ArrowLeft,
   Sparkles,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { formatDuration } from '../utils/format'
 import { fuelProfile } from '../utils/vehicle'
+import { useCurrency } from '../utils/currency'
 
 const TRANSPORT_CONFIG = {
   car: {
@@ -50,21 +51,18 @@ const METRICS = [
     key: 'time_minutes',
     label: 'Travel Time',
     icon: Clock,
-    unit: 'min',
     format: formatDuration,
   },
   {
     key: 'cost_eur',
     label: 'Est. Cost',
-    icon: Euro,
-    unit: '€',
-    format: (v) => `€${v.toFixed(2)}`,
+    icon: Wallet,
+    format: (v, formatMoney) => formatMoney(v),
   },
   {
     key: 'co2_kg',
     label: 'CO₂ Emissions',
     icon: Leaf,
-    unit: 'kg',
     format: (v) => `${v.toFixed(1)} kg`,
   },
 ]
@@ -84,6 +82,7 @@ function renderBold(line) {
 
 export default function ComparisonResults({ comparison, onBack, backLabel }) {
   const carProfile = fuelProfile(comparison.car_fuel_type)
+  const { formatMoney } = useCurrency()
   const options = [
     { key: 'car', data: comparison.car },
     { key: 'train', data: comparison.train },
@@ -192,7 +191,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
                 )}
                 {isCheapest && (
                   <span className="px-2.5 py-1 text-xs font-bold bg-blue-100 text-blue-900 rounded-lg flex items-center gap-1 shadow-sm">
-                    <Euro className="w-3.5 h-3.5 text-blue-600" />
+                    <Wallet className="w-3.5 h-3.5 text-blue-600" />
                     Cheapest
                   </span>
                 )}
@@ -242,7 +241,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
                             isWinningMetric ? 'text-slate-900' : 'text-slate-700'
                           }`}
                         >
-                          {format(data[mKey])}
+                          {format(data[mKey], formatMoney)}
                         </span>
                         {isWinningMetric && (
                           <span className="ml-1 text-[11px] font-bold text-amber-600">★</span>
@@ -298,7 +297,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
             <div className="bg-white p-3 rounded-xl border border-slate-200">
               <span className="text-slate-400 block mb-0.5">{carProfile.priceLabel}</span>
               <span className="font-bold text-slate-800">
-                €{Number(comparison.car_fuel_price_per_liter).toFixed(2)} / {carProfile.unit}
+                {formatMoney(comparison.car_fuel_price_per_liter)} / {carProfile.unit}
               </span>
             </div>
           </div>

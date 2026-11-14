@@ -1,28 +1,21 @@
 import { useState, useEffect, useRef } from 'react'
 import { calculateRoadDistance, searchCities } from '../utils/geoData'
 import { formatDuration } from '../utils/format'
-import { FUEL_PROFILES, fuelProfile } from '../utils/vehicle'
+import CarSettings, { useCarConfig } from './CarSettings'
+import { useCurrency } from '../utils/currency'
 import {
   MapPin,
   ArrowUpDown,
   Car,
   Train,
   Bus,
-  Fuel,
-  Gauge,
   Sparkles,
   Loader2,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   X,
-  Sliders,
   Route,
   Info,
-  Zap,
 } from 'lucide-react'
-
-const FUEL_ICONS = { petrol: Fuel, diesel: Fuel, lpg: Gauge, electric: Zap }
 
 export default function Sidebar({
   originCity,
@@ -36,7 +29,6 @@ export default function Sidebar({
   hasResults,
   onShowResults,
 }) {
-  const [showCarDetails, setShowCarDetails] = useState(false)
   const [showManualDistance, setShowManualDistance] = useState(false)
   const [manualDistance, setManualDistance] = useState('')
 
@@ -49,19 +41,8 @@ export default function Sidebar({
   const originInputRef = useRef(null)
   const destInputRef = useRef(null)
 
-  // Car configuration
-  const [carConfig, setCarConfig] = useState({
-    fuelType: 'petrol',
-    consumption: FUEL_PROFILES.petrol.consumption,
-    price: FUEL_PROFILES.petrol.price,
-  })
-  const profile = fuelProfile(carConfig.fuelType)
-
-  // Units differ between fuels (L vs kWh), so switching type loads that type's typical values
-  const selectFuelType = (fuelType) => {
-    const { consumption, price } = fuelProfile(fuelType)
-    setCarConfig({ fuelType, consumption, price })
-  }
+  const car = useCarConfig()
+  const { currency } = useCurrency()
 
   // Sync inputs with selected props
   useEffect(() => {
@@ -98,9 +79,10 @@ export default function Sidebar({
       origin: originCity,
       destination: destinationCity,
       distance_km: effectiveDistance,
-      car_fuel_type: carConfig.fuelType,
-      car_consumption_l_per_100km: parseFloat(carConfig.consumption) || undefined,
-      car_fuel_price_per_liter: parseFloat(carConfig.price) || undefined,
+      car_fuel_type: car.config.fuelType,
+      car_consumption_l_per_100km: car.consumption,
+      car_fuel_price_per_liter: car.priceEur,
+      currency, // only used for the AI recommendation's wording
     })
   }
 
@@ -386,94 +368,6 @@ export default function Sidebar({
               Pick both Start & Destination to calculate distance automatically.
             </div>
           )}
-
-          {/* Car Configuration (Accordion) */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-            <button
-              type="button"
-              onClick={() => setShowCarDetails(!showCarDetails)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-xs font-semibold text-slate-700 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-primary-600" />
-                <span>Car Customization (Optional)</span>
-              </div>
-              {showCarDetails ? (
-                <ChevronUp className="w-4 h-4 text-slate-400" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              )}
-            </button>
-
-            {showCarDetails && (
-              <div className="p-3.5 space-y-3 text-xs border-t border-slate-100">
-                {/* Fuel type selection */}
-                <div>
-                  <label className="block font-medium text-slate-600 mb-1.5">Fuel Type</label>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {Object.entries(FUEL_PROFILES).map(([value, { label }]) => {
-                      const Icon = FUEL_ICONS[value]
-                      return (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => selectFuelType(value)}
-                          className={`p-2 rounded-lg border flex items-center gap-2 transition-all ${
-                            carConfig.fuelType === value
-                              ? 'border-primary-500 bg-primary-50/80 text-primary-900 font-bold shadow-sm'
-                              : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
-                          }`}
-                        >
-                          <Icon className="w-3.5 h-3.5 text-slate-500" />
-                          <span>{label}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Consumption & Price */}
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="block">
-                    <span className="block font-medium text-slate-600 mb-1">Consumption</span>
-                    <span className="relative block">
-                      <input
-                        type="number"
-                        value={carConfig.consumption}
-                        onChange={(e) =>
-                          setCarConfig((prev) => ({ ...prev, consumption: e.target.value }))
-                        }
-                        step="0.1"
-                        min="0.1"
-                        className="w-full pl-2.5 pr-20 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-                      />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        {profile.unit}/100km
-                      </span>
-                    </span>
-                  </label>
-                  <label className="block">
-                    <span className="block font-medium text-slate-600 mb-1">{profile.priceLabel}</span>
-                    <span className="relative block">
-                      <input
-                        type="number"
-                        value={carConfig.price}
-                        onChange={(e) =>
-                          setCarConfig((prev) => ({ ...prev, price: e.target.value }))
-                        }
-                        step="0.01"
-                        min="0.01"
-                        className="w-full pl-2.5 pr-14 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-                      />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        €/{profile.unit}
-                      </span>
-                    </span>
-                  </label>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         <div className="p-4 pt-3 border-t border-slate-200 bg-slate-50 space-y-3">
@@ -483,6 +377,8 @@ export default function Sidebar({
               {error}
             </div>
           )}
+
+          <CarSettings config={car.config} selectFuelType={car.selectFuelType} setField={car.setField} />
 
           {/* Submit Action Button */}
           <button

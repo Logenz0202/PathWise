@@ -5,6 +5,7 @@ import ComparisonResults from './components/ComparisonResults'
 import HistoryList from './components/HistoryList'
 import { useApi } from './hooks/useApi'
 import { calculateRoadDistance } from './utils/geoData'
+import { CURRENCIES, useCurrency } from './utils/currency'
 import {
   Compass,
   Car,
@@ -23,6 +24,7 @@ function App() {
   const [lastComparison, setLastComparison] = useState(null)
 
   const { post, loading, error } = useApi()
+  const { currency, setCurrency } = useCurrency()
 
   // Calculate current road distance
   const currentDistance = calculateRoadDistance(originCity, destinationCity)
@@ -93,32 +95,56 @@ function App() {
               </div>
             </div>
 
-            {/* Nav Tabs */}
-            <nav className="flex items-center gap-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 text-xs font-semibold">
+            <div className="flex items-center gap-3">
+              {/* Currency toggle: one button, a click anywhere flips EUR <-> PLN app-wide */}
               <button
-                onClick={() => setActiveTab('planner')}
-                className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                  navTab === 'planner'
-                    ? 'bg-primary-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                }`}
+                type="button"
+                onClick={() => setCurrency(currency === 'EUR' ? 'PLN' : 'EUR')}
+                title={`Show prices in ${currency === 'EUR' ? 'PLN' : 'EUR'}`}
+                aria-label={`Currency: ${currency}. Switch to ${currency === 'EUR' ? 'PLN' : 'EUR'}`}
+                className="group flex items-center bg-slate-800/80 hover:bg-slate-800 p-1 rounded-xl border border-slate-700/60 hover:border-slate-600 text-xs font-semibold transition-colors"
               >
-                <Compass className="w-4 h-4" />
-                <span>Interactive Map</span>
+                {Object.keys(CURRENCIES).map((code) => (
+                  <span
+                    key={code}
+                    className={`px-2.5 py-1.5 rounded-lg transition-all ${
+                      currency === code
+                        ? 'bg-slate-600 text-white shadow-md'
+                        : 'text-slate-400 group-hover:text-white'
+                    }`}
+                  >
+                    {code}
+                  </span>
+                ))}
               </button>
 
-              <button
-                onClick={() => setActiveTab('history')}
-                className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                  navTab === 'history'
-                    ? 'bg-primary-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                }`}
-              >
-                <History className="w-4 h-4" />
-                <span>History</span>
-              </button>
-            </nav>
+              {/* Nav Tabs */}
+              <nav className="flex items-center gap-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 text-xs font-semibold">
+                <button
+                  onClick={() => setActiveTab('planner')}
+                  className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                    navTab === 'planner'
+                      ? 'bg-primary-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                  }`}
+                >
+                  <Compass className="w-4 h-4" />
+                  <span>Interactive Map</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('history')}
+                  className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                    navTab === 'history'
+                      ? 'bg-primary-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                  }`}
+                >
+                  <History className="w-4 h-4" />
+                  <span>History</span>
+                </button>
+              </nav>
+            </div>
           </div>
         </div>
       </header>

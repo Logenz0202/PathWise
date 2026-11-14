@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -21,6 +21,8 @@ class ComparisonRequest(BaseModel):
     car_fuel_price_per_liter: Optional[float] = Field(
         None, gt=0, description="Energy price in EUR per litre, or per kWh for electric"
     )
+    # Only affects the currency the AI recommendation is written in; all amounts are EUR
+    currency: Literal["EUR", "PLN"] = Field("EUR", description="Currency for the recommendation text")
 
 
 class TransportOption(BaseModel):

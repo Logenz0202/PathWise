@@ -1,6 +1,6 @@
 """Shared test setup.
 
-Unit tests (calculator, eco_coach, geo) need nothing external. API tests run against a real
+Unit tests (calculator, eco_coach, geo, routing parsing) need nothing external. API tests run against a real
 PostgreSQL database, `pathwise_test` on the docker-compose `db` service by default, so the
 developer's own `pathwise` data is never touched. Override it with TEST_DATABASE_URL (CI does).
 """
@@ -19,6 +19,8 @@ TEST_DATABASE_URL = os.environ.get(
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 # Tests use the deterministic offline Eco-Coach; the LLM path is tested with a mocked transport
 os.environ["OPENROUTER_API_KEY"] = ""
+# No network: routes are estimated; the OSRM client is tested with a mocked transport
+os.environ["OSRM_URL"] = ""
 
 
 def _ensure_test_database(url: str) -> None:
@@ -57,6 +59,6 @@ def client(api_app, db_engine):
     from fastapi.testclient import TestClient
 
     with db_engine.begin() as conn:
-        conn.execute(text("TRUNCATE comparisons, car_profiles RESTART IDENTITY"))
+        conn.execute(text("TRUNCATE comparisons, car_profiles, road_routes RESTART IDENTITY"))
     with TestClient(api_app) as test_client:
         yield test_client

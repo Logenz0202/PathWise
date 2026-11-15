@@ -7,11 +7,12 @@
 ## 💡 Features
 
 1. **Interactive map** – ~1,700 clickable cities (Poland and its neighbours) on OpenStreetMap. Smaller towns appear as you zoom in. Cities can also be searched by name, including Polish names such as *Praga* or *Kijów*.
-2. **Multi-criteria comparison** – car vs. train vs. bus across door-to-door travel time (train and bus include getting to the station and waiting, so the car can win short trips), cost and CO₂, with the fastest, cheapest and greenest option highlighted.
-3. **My Cars (car presets)** – save your own cars (name, fuel type, consumption, fuel/electricity price) and pick one in the planner; results and History show which car each comparison used. Petrol, diesel, LPG and electric are supported, with the right units (L/100km or kWh/100km). Without a selected car, PathWise uses an average car.
-4. **AI Eco-Coach** – tell it what matters most (balanced, fastest, cheapest or greenest) and, optionally, anything else in your own words ("lots of luggage", "I want to work on the way"). Together with the computed numbers and the chosen car this goes to an LLM (via OpenRouter), which returns structured advice: the recommended mode (marked "AI pick" on its card), a one-line headline, the reasoning and up to two practical tips. If no API key is configured or the reply is unusable, a rule-based coach returns advice in the same format, so the app always works.
-5. **History** – every comparison is saved; reopen or delete past trips. Each result has its own address (e.g. `/comparisons/42`), so it can be bookmarked, shared or reloaded.
-6. **English / Polish and EUR / PLN** – switch language and currency from the header. Numbers and the AI's answer follow the chosen language.
+2. **Real road routes** – the route between two cities follows the actual road network (OpenStreetMap data via the free OSRM routing service, no API key) and is drawn on the map, with the real road distance and a time preview per mode before you compare.
+3. **Multi-criteria comparison** – car vs. train vs. bus across door-to-door travel time, cost and CO₂, with the fastest, cheapest and greenest option highlighted. Times are realistic rather than "distance ÷ fixed speed": the car follows the speed limits of the roads it uses, the bus is capped at coach speed with stops and legal driver breaks, the train uses typical speeds per country with border and gauge changes, and train and bus include getting to the station.
+4. **My Cars (car presets)** – save your own cars (name, fuel type, consumption, fuel/electricity price) and pick one in the planner; results and History show which car each comparison used. Petrol, diesel, LPG and electric are supported, with the right units (L/100km or kWh/100km). Without a selected car, PathWise uses an average car.
+5. **AI Eco-Coach** – tell it what matters most (balanced, fastest, cheapest or greenest) and, optionally, anything else in your own words ("lots of luggage", "I want to work on the way"). Together with the computed numbers and the chosen car this goes to an LLM (via OpenRouter), which returns structured advice: the recommended mode (marked "AI pick" on its card), a one-line headline, the reasoning and up to two practical tips. If no API key is configured or the reply is unusable, a rule-based coach returns advice in the same format, so the app always works.
+6. **History** – every comparison is saved; reopen or delete past trips. Each result has its own address (e.g. `/comparisons/42`), so it can be bookmarked, shared or reloaded.
+7. **English / Polish and EUR / PLN** – switch language and currency from the header. Numbers and the AI's answer follow the chosen language.
 
 ### ✨ Creative twist
 The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get a different answer depending on your priority or a note like "moving flat, lots of luggage" (→ the car, because it can carry your things). Emissions are realistic rather than flattering: an electric car is charged from the grid, so it is **not** shown as zero-emission.
@@ -29,8 +30,10 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 | Quality | **pytest** + pytest-cov, **ruff**, GitHub Actions CI |
 
 ### Interesting solutions
-- **Layered backend** – `api/` (REST routes) → `services/` (calculator, AI coach, geo lookups) → `models/` + `schemas/` (SQLAlchemy tables, Pydantic validation).
+- **Layered backend** – `api/` (REST routes) → `services/` (routing, calculator, AI coach, geo lookups) → `models/` + `schemas/` (SQLAlchemy tables, Pydantic validation).
 - **Structured, grounded AI output** – the backend decides *what the numbers say* and the LLM explains it. For "balanced", each option gets a score from how many times worse it is than the best one on time, cost and CO₂ (log ratios, so 3× the price outweighs 3% more CO₂ instead of "winning a category"); a specific priority points to that category's winner. The prompt gives the model pre-formatted numbers, the exact differences ("+€60.63 vs car, 3.4x") and the best match; it must follow it unless the traveller's note gives a concrete reason, and must state the key trade-off with its size. The reply is a JSON object (`recommended`, `headline`, `reason`, `tips`) validated with Pydantic; temperature 0 keeps the same inputs giving the same pick.
+- **Routing that is free, polite and offline-safe** – `services/routing.py` asks the public OSRM server for the route once per city pair (with an identifying User-Agent and at most one request per second, as its usage policy asks) and stores it in PostgreSQL; the reverse trip reuses it. The line is simplified (Douglas–Peucker) to ~300 points for the map. If OSRM is down or `OSRM_URL` is empty, a straight-line estimate is used and the UI says so.
+- **A transparent time model** – every rule in `services/calculator.py` is a named constant: traffic allowance and rest breaks for the car; for the bus, each road segment from OSRM capped at the 100 km/h coach limit, stops and the 45-minute break EU rules require after 4.5 h; for the train (no free rail router covers the region), a rail distance from the straight line, average long-distance train speeds per country, slower regional trains on short trips, and extra time at borders (passport control outside Schengen, changing trains where standard gauge meets the broad gauge of Lithuania, Belarus and Ukraine). Train times are labelled as estimates.
 - **Free-text context, safely** – the traveller's note is passed to the model as quoted context with an instruction to ignore any instructions inside it (a simple prompt-injection guard), and is limited to 200 characters.
 - **AI with a safe fallback** – any OpenRouter problem (no key, network, quota, invalid reply) is logged and replaced by rule-based advice in the same structure and the user's language.
 - **1,700 markers without lag** – cities are drawn on a Leaflet canvas layer and filtered by zoom level and viewport, so only relevant markers are rendered.
@@ -59,9 +62,9 @@ Interactive docs (Swagger UI): http://localhost:8001/docs
 | `GET` | `/api/comparisons/{id}` | Get one comparison |
 | `DELETE` | `/api/comparisons/{id}` | Delete a comparison → `204 No Content` |
 | `GET` | `/api/geo/cities` | List supported cities |
-| `GET` | `/api/geo/distance?origin=&destination=` | Estimate the road distance between two cities |
+| `GET` | `/api/geo/route?origin=&destination=[&distance_km=]` | Road route (map line, distance) and door-to-door time per mode for an average car |
 
-Invalid input returns `422` with the offending fields; unknown ids return `404`. CORS is configured for the frontend origin (`CORS_ORIGINS` in `backend/app/core/config.py`).
+Invalid input (including an unknown city or the same city twice) returns `422`; unknown ids return `404`. CORS is configured for the frontend origin (`CORS_ORIGINS` in `backend/app/core/config.py`).
 
 ## 📁 Project Structure
 
@@ -147,8 +150,8 @@ Open http://localhost:5173. The Vite dev server forwards `/api` requests to the 
 
 ## 🧪 Tests & CI
 
-The backend has ~80 pytest tests (≈99% coverage):
-- **Unit tests** for the calculator, distance lookup and Eco-Coach: the decision logic (priorities and the size-based balanced score), formatting, parsing and validating the model's reply, the offline fallback, and the LLM call itself with a mocked HTTP transport (valid advice is used; HTTP errors, network errors and invalid replies fall back to offline advice). No network access or API key needed.
+The backend has ~100 pytest tests (≈99% coverage):
+- **Unit tests** for the time model (car breaks, coach speed cap and driver breaks, train speeds per country, border and gauge changes), the OSRM client (parsing, line simplification, caching, reverse trips and the fallback when OSRM fails, with a mocked HTTP transport), distance lookup and Eco-Coach: the decision logic (priorities and the size-based balanced score), formatting, parsing and validating the model's reply, the offline fallback, and the LLM call itself with a mocked HTTP transport (valid advice is used; HTTP errors, network errors and invalid replies fall back to offline advice). No network access or API key needed.
 - **API tests** for every endpoint, run with FastAPI's `TestClient` against a real PostgreSQL database: CRUD flows, `201`/`204`/`404`/`422` responses, history order and paging, the legacy plain-text recommendation and the CORS rules.
 
 API tests use a separate `pathwise_test` database (created automatically on the `db` container), so your own data is never touched:
@@ -173,6 +176,7 @@ Set `TEST_DATABASE_URL` to use another PostgreSQL server.
   - car presets as a full CRUD resource (API + My Cars page), electric-car units and emissions, EUR/PLN and English/Polish support;
   - redesigning the Eco-Coach after testing its answers: structured JSON output validated before saving, a priority and free-text note from the traveller, door-to-door times, and moving the decision logic into the backend (size-based scoring) so the LLM explains a grounded choice instead of guessing — including fixing cases where it contradicted the numbers or gave tips for the wrong option;
   - UX changes (layout fitting laptop screens, history cards, header behaviour) based on my feedback;
+  - real road routes from OSRM with a database cache and a realistic per-mode travel-time model (I chose free, keyless services and checked the numbers against real trips);
   - moving the frontend to TypeScript and React Router, and upgrading the stack to current versions (PostgreSQL 18, Python 3.15, Node 26, React 19, Vite 8, Tailwind CSS 4);
   - code review and cleanup: removing dead code, de-duplicating components, fixing bugs found along the way (e.g. a startup error in the config, broken API paths, an invalid AI model id) and REST status codes.
 - I decided on the features and UX, reviewed the changes and tested the app in the browser on Docker after each step.
@@ -181,6 +185,9 @@ Set `TEST_DATABASE_URL` to use another PostgreSQL server.
 - [x] Interactive map on OpenStreetMap tiles (Leaflet) with ~1,700 clickable cities.
 - [x] English / Polish interface and EUR / PLN prices.
 - [x] Saved car presets.
+- [x] Real road routes (OSRM) and realistic per-mode travel times.
+- [ ] More places from OpenStreetMap (towns and villages, loaded from the API by map area instead of one bundled list).
+- [ ] Real train timetables instead of estimated train times.
 - [ ] Polish display names for cities in the Polish interface (search already accepts them).
 - [ ] Database module for gas stations and Electric Vehicle (EV) charging points along the route.
 - [ ] User accounts and favorite saved routes tracking.
@@ -188,7 +195,7 @@ Set `TEST_DATABASE_URL` to use another PostgreSQL server.
 
 ## 🏙️ City Data & Attribution
 
-The map, the sidebar search and the backend share one city list (every place with 15k+ inhabitants in Poland, Germany, Czechia, Slovakia, Lithuania, Belarus and Ukraine): `frontend/src/data/cities.json` and `backend/app/data/cities.json`. It is generated from [GeoNames](https://www.geonames.org/) (CC-BY 4.0). Map tiles © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
+The map, the sidebar search and the backend share one city list (every place with 15k+ inhabitants in Poland, Germany, Czechia, Slovakia, Lithuania, Belarus and Ukraine): `frontend/src/data/cities.json` and `backend/app/data/cities.json`. It is generated from [GeoNames](https://www.geonames.org/) (CC-BY 4.0). Map tiles and road data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors; routes computed with [OSRM](https://project-osrm.org/).
 
 To regenerate it, download and unzip [`cities15000.zip`](https://download.geonames.org/export/dump/cities15000.zip), then run:
 

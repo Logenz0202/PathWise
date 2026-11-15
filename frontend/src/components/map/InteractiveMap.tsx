@@ -14,6 +14,7 @@ import {
   RADIUS_BY_TIER,
   buildArc,
   distanceIcon,
+  midpointAlong,
 } from './mapHelpers'
 import {
   CITIES,
@@ -21,15 +22,14 @@ import {
   MAP_ZOOM,
   MAP_MAX_BOUNDS,
   maxTierForZoom,
-  calculateRoadDistance,
   findCityByName,
 } from '../../utils/geoData'
 import { useI18n } from '../../i18n/LanguageContext'
 import { cx } from '../../utils/cx'
-import type { City } from '../../types'
+import type { City, RouteInfo } from '../../types'
 
-// Curved route line (glow, line, animated dashes) with the distance badge in the middle
-function RouteLine({ points, mid, distanceKm }: { points: LatLngTuple[]; mid: LatLngTuple; distanceKm: number }) {
+// Route line (glow, line, animated dashes) with the distance badge in the middle; no badge while loading
+function RouteLine({ points, mid, distanceKm }: { points: LatLngTuple[]; mid: LatLngTuple; distanceKm?: number }) {
   return (
     <>
       <Polyline
@@ -47,7 +47,7 @@ function RouteLine({ points, mid, distanceKm }: { points: LatLngTuple[]; mid: La
         pathOptions={{ color: '#ffffff', weight: 2.5, className: 'pw-route-dash' }}
         interactive={false}
       />
-      <Marker position={mid} icon={distanceIcon(distanceKm)} interactive={false} />
+      {distanceKm != null && <Marker position={mid} icon={distanceIcon(distanceKm)} interactive={false} />}
     </>
   )
 }
@@ -69,7 +69,8 @@ interface InteractiveMapProps {
   onSelectOrigin: (name: string) => void
   onSelectDestination: (name: string) => void
   onQuickRouteSelect: (origin: string, destination: string) => void
-  calculatedDistance: number | null
+  // Road route from the API; until it arrives (or if routing is unavailable) a curved arc is drawn
+  route: RouteInfo | null
 }
 
 // OpenStreetMap with ~1.7k clickable cities: click to set the start, then the finish
@@ -79,7 +80,7 @@ export default function InteractiveMap({
   onSelectOrigin,
   onSelectDestination,
   onQuickRouteSelect,
-  calculatedDistance,
+  route,
 }: InteractiveMapProps) {
   const [view, setView] = useState<{ zoom: number; bounds: LatLngBounds | null }>({ zoom: MAP_ZOOM, bounds: null })
   const [choiceCity, setChoiceCity] = useState<City | null>(null)
@@ -108,13 +109,15 @@ export default function InteractiveMap({
     )
   }, [view, origin, destination])
 
-  const route = useMemo(() => {
+  // The road itself when the API has it, otherwise a curved arc between the two cities
+  const line = useMemo(() => {
     if (!origin || !destination || origin.id === destination.id) return null
-    return {
-      ...buildArc(origin, destination),
-      distanceKm: calculatedDistance || (calculateRoadDistance(origin.name, destination.name) ?? 0),
+    const geometry = route?.geometry
+    if (geometry && geometry.length > 1) {
+      return { points: geometry, mid: midpointAlong(geometry), distanceKm: route?.distance_km }
     }
-  }, [origin, destination, calculatedDistance])
+    return { ...buildArc(origin, destination), distanceKm: route?.distance_km }
+  }, [origin, destination, route])
 
   const handleCityClick = (city: City) => {
     if (!originCity) {
@@ -167,7 +170,7 @@ export default function InteractiveMap({
         <FitRoute origin={origin} destination={destination} />
         <MapControls darkTiles={darkTiles} onToggleTiles={() => setDarkTiles((d) => !d)} />
 
-        {route && <RouteLine points={route.points} mid={route.mid} distanceKm={route.distanceKm} />}
+        {line && <RouteLine points={line.points} mid={line.mid} distanceKm={line.distanceKm} />}
 
         {visibleCities.map((city) => {
           const permanentLabel = view.zoom >= LABEL_ZOOM_BY_TIER[city.tier]

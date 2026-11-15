@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -43,6 +43,8 @@ class Advice(BaseModel):
 
 class TransportOption(BaseModel):
     mode: TransportMode
+    # Road distance for car and bus, estimated rail distance for the train
+    distance_km: float
     time_minutes: float
     cost_eur: float
     co2_kg: float
@@ -72,6 +74,22 @@ class ComparisonResponse(ComparisonListResponse):
     car_fuel_price_per_liter: Optional[float]
     priority: Optional[str]
     notes: Optional[str]
+    # "osrm" (real road route) or "estimate"; empty for comparisons saved before routing
+    route_source: Optional[str]
     ai_advice: Optional[Advice]
     # Plain-text recommendation saved by earlier versions (before structured advice)
     ai_text: Optional[str]
+
+
+class RouteResponse(BaseModel):
+    """Road route between two cities, with door-to-door times for a preview before comparing."""
+
+    origin: str
+    destination: str
+    distance_km: float
+    source: Literal["osrm", "estimate"]
+    # [lat, lng] points along the road; null for estimates
+    geometry: Optional[List[Tuple[float, float]]]
+    car: TransportOption
+    train: TransportOption
+    bus: TransportOption

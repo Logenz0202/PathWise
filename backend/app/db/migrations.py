@@ -12,6 +12,8 @@ ADDED_COLUMNS = [
     ("comparisons", "car_name", "VARCHAR"),
     ("comparisons", "priority", "VARCHAR"),
     ("comparisons", "notes", "VARCHAR"),
+    ("comparisons", "route_source", "VARCHAR"),
+    ("comparisons", "train_distance_km", "DOUBLE PRECISION"),
 ]
 
 

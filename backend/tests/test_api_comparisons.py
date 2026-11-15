@@ -12,9 +12,13 @@ def test_create_comparison_calculates_distance_options_and_advice(client):
     assert response.status_code == 201
     body = response.json()
     assert body["distance_km"] == 295.0  # known corridor, filled in by the API
+    assert body["route_source"] == "estimate"  # OSRM is disabled in tests
     for mode in ("car", "train", "bus"):
         assert body[mode]["mode"] == mode
         assert body[mode]["time_minutes"] > 0 and body[mode]["cost_eur"] > 0
+    # Car and bus drive the road; the train has its own rail distance
+    assert body["car"]["distance_km"] == body["bus"]["distance_km"] == 295.0
+    assert body["train"]["distance_km"] != 295.0
     assert body["priority"] == "balanced"
     assert body["ai_advice"]["recommended"] in {"car", "train", "bus"}
     assert body["ai_advice"]["headline"]
@@ -39,7 +43,7 @@ def test_create_comparison_with_car_profile_and_preferences(client):
     )
 
     body = response.json()
-    assert body["distance_km"] == 100
+    assert body["distance_km"] == 100  # the typed distance replaces the route's
     assert body["car"]["cost_eur"] == 5.4  # 18 kWh * 0.30 EUR; amounts stay in EUR
     assert body["car_name"] == "Tesla"
     assert body["notes"] == "travelling with a dog"  # trimmed before saving
@@ -86,6 +90,20 @@ def test_old_plain_text_recommendation_is_returned_as_text(client, db_engine):
     body = client.get(f"/api/comparisons/{row_id}").json()
     assert body["ai_advice"] is None
     assert body["ai_text"] == "Take the train."
+
+
+@pytest.mark.parametrize(
+    "trip, message",
+    [
+        ({"origin": "Atlantis", "destination": "Krakow"}, "Unknown city: Atlantis"),
+        ({"origin": "Krakow", "destination": "Kraków"}, "Origin and destination are the same city"),
+    ],
+)
+def test_comparison_needs_two_different_known_cities(client, trip, message):
+    response = client.post("/api/comparisons/", json=trip)
+    assert response.status_code == 422
+    assert response.json()["detail"] == message
+    assert client.get("/api/comparisons/").json() == []
 
 
 @pytest.mark.parametrize(

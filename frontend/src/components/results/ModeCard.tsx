@@ -21,8 +21,11 @@ interface ModeCardProps {
 // Result card for one transport mode: badges, its three numbers and an emissions bar
 export default function ModeCard({ mode, option, best, aiPick, carLabel, maxCo2, fmt }: ModeCardProps) {
   const { t, formatNumber } = useI18n()
-  const { icon: Icon, labelKey, speedKmh, accessMinutes, solid, bar } = MODES[mode]
+  const { icon: Icon, labelKey, accessMinutes, solid, bar } = MODES[mode]
   const isGreenest = best.co2_kg === mode
+  // Average speed while travelling (without getting to the station), over this mode's own distance
+  const travelHours = (option.time_minutes - accessMinutes) / 60
+  const avgSpeed = travelHours > 0 ? Math.round(option.distance_km / travelHours) : null
 
   const badges: { show: boolean; tone: BadgeTone; icon: LucideIcon; filled?: boolean; label: string }[] = [
     { show: aiPick, tone: 'violet', icon: Sparkles, label: t('results.aiPick') },
@@ -55,7 +58,10 @@ export default function ModeCard({ mode, option, best, aiPick, carLabel, maxCo2,
         </div>
         <div>
           <h3 className="text-xl font-black text-slate-900">{t(labelKey)}</h3>
-          <p className="text-xs text-slate-400 font-medium">{t('results.avgSpeed', { speed: `~${speedKmh} km/h` })}</p>
+          <p className="text-xs text-slate-400 font-medium">
+            {formatNumber(option.distance_km, 0)} km
+            {avgSpeed != null && ` · ${t('results.avgSpeed', { speed: `~${avgSpeed} km/h` })}`}
+          </p>
           {accessMinutes > 0 && (
             <p className="text-[11px] text-slate-400">{t('results.accessTime', { min: accessMinutes })}</p>
           )}

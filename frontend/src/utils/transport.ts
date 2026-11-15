@@ -5,7 +5,6 @@ import type { TransportMode } from '../types'
 interface ModeInfo {
   labelKey: TranslationKey
   icon: LucideIcon
-  speedKmh: number
   accessMinutes: number
   // Literal Tailwind classes so they're picked up by the build
   solid: string
@@ -15,13 +14,12 @@ interface ModeInfo {
 }
 
 // One place for how each transport mode looks across the app.
-// speedKmh and accessMinutes (getting to the station and waiting) mirror AVERAGE_SPEEDS and
-// ACCESS_MINUTES in backend/app/services/calculator.py; they're used for the live time estimates.
+// accessMinutes (getting to the station and waiting) mirrors ACCESS_MINUTES in
+// backend/app/services/calculator.py; it is already included in every time the API returns.
 export const MODES: Record<TransportMode, ModeInfo> = {
   car: {
     labelKey: 'mode.car',
     icon: Car,
-    speedKmh: 80,
     accessMinutes: 0,
     solid: 'bg-blue-600',
     bar: 'bg-blue-500',
@@ -31,7 +29,6 @@ export const MODES: Record<TransportMode, ModeInfo> = {
   train: {
     labelKey: 'mode.train',
     icon: Train,
-    speedKmh: 120,
     accessMinutes: 40,
     solid: 'bg-red-600',
     bar: 'bg-red-500',
@@ -41,7 +38,6 @@ export const MODES: Record<TransportMode, ModeInfo> = {
   bus: {
     labelKey: 'mode.bus',
     icon: Bus,
-    speedKmh: 70,
     accessMinutes: 30,
     solid: 'bg-amber-600',
     bar: 'bg-amber-500',

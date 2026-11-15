@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     OPENROUTER_MODEL: str = "google/gemma-4-26b-a4b-it"
 
+    # Road routing (OpenStreetMap data, no key needed). Empty disables it: distances and times are
+    # then estimated from the straight-line distance.
+    OSRM_URL: str = "https://router.project-osrm.org"
+    OSRM_TIMEOUT_SECONDS: float = 10.0
+
     # Display currency: prices are calculated in EUR and converted only for text shown to the user.
     # Fixed rate for the MVP; keep in sync with EUR_TO_PLN in frontend/src/utils/currency.jsx
     EUR_TO_PLN_RATE: float = 4.25

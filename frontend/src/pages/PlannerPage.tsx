@@ -3,7 +3,7 @@ import InteractiveMap from '../components/map/InteractiveMap'
 import Sidebar from '../components/planner/Sidebar'
 import { useApi } from '../hooks/useApi'
 import type { CarsState } from '../hooks/useCars'
-import { calculateRoadDistance } from '../utils/geoData'
+import { useRoute } from '../hooks/useRoute'
 import { cx } from '../utils/cx'
 import type { Comparison, ComparisonRequest, Priority } from '../types'
 import { comparisonPath, type ComparisonLocationState } from './ComparisonPage'
@@ -30,6 +30,8 @@ export default function PlannerPage({ trip, onTripChange, cars, lastComparison, 
   const navigate = useNavigate()
   const { post, loading, error } = useApi()
   const { origin, destination } = trip
+  // Road line for the map (the sidebar asks for the same route, so it is fetched once)
+  const { route } = useRoute(origin, destination)
 
   const openResult = (id: number) =>
     navigate(comparisonPath(id), { state: { from: 'planner' } satisfies ComparisonLocationState })
@@ -82,7 +84,7 @@ export default function PlannerPage({ trip, onTripChange, cars, lastComparison, 
           onSelectOrigin={(name) => onTripChange({ origin: name })}
           onSelectDestination={(name) => onTripChange({ destination: name })}
           onQuickRouteSelect={(o, d) => onTripChange({ origin: o, destination: d })}
-          calculatedDistance={calculateRoadDistance(origin, destination)}
+          route={route}
         />
       </div>
     </div>

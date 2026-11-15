@@ -5,7 +5,7 @@ import CarPicker from './CarPicker'
 import CityInput from './CityInput'
 import DistanceCard from './DistanceCard'
 import TripPreferences from './TripPreferences'
-import { calculateRoadDistance } from '../../utils/geoData'
+import { useRoute } from '../../hooks/useRoute'
 import { useCurrency } from '../../utils/currency'
 import { useI18n } from '../../i18n/LanguageContext'
 import { cx } from '../../utils/cx'
@@ -60,18 +60,21 @@ export default function Sidebar({
   const { currency } = useCurrency()
   const { lang, t } = useI18n()
 
-  const autoDistance = calculateRoadDistance(originCity, destinationCity)
-  const distance = manual && manualDistance ? parseFloat(manualDistance) : autoDistance
-  const canCompare = Boolean(originCity && destinationCity && distance)
+  // A distance typed by the user (e.g. a detour) replaces the road route's; times scale with it
+  const typedKm = parseFloat(manualDistance)
+  const manualKm = manual && typedKm > 0 ? typedKm : null
+  const { route, loading: routeLoading } = useRoute(originCity, destinationCity, manualKm)
+  // No route means a city is missing, both are the same, or it's still loading
+  const canCompare = route != null
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!canCompare || !distance) return
+    if (!canCompare) return
 
     onCompare({
       origin: originCity,
       destination: destinationCity,
-      distance_km: distance,
+      distance_km: manualKm ?? undefined,
       priority,
       notes: notes.trim() || undefined,
       // Average cars send typical specs without a name; saved presets also send their name
@@ -179,8 +182,8 @@ export default function Sidebar({
 
           {originCity && destinationCity ? (
             <DistanceCard
-              autoDistance={autoDistance}
-              distance={distance}
+              route={route}
+              loading={routeLoading}
               manual={manual}
               onToggleManual={() => setManual((m) => !m)}
               manualDistance={manualDistance}

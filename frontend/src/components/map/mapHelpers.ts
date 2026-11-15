@@ -4,6 +4,7 @@ import type { City } from '../../types'
 export const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 export const OSM_ATTRIBUTION = [
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  'Routes: <a href="https://project-osrm.org/">OSRM</a>',
   'Cities: <a href="https://www.geonames.org/">GeoNames</a>',
 ].join(' · ')
 
@@ -56,5 +57,22 @@ export const distanceIcon = (km: number) =>
   L.divIcon({
     className: '',
     iconSize: [0, 0],
-    html: `<div class="pw-distance-badge">🚗 ${km} km</div>`,
+    html: `<div class="pw-distance-badge">🚗 ${Math.round(km)} km</div>`,
   })
+
+// Point halfway along a line, by length (so the distance badge sits in the middle of the road)
+export function midpointAlong(points: LatLngTuple[]): LatLngTuple {
+  const segment = (a: LatLngTuple, b: LatLngTuple) => Math.hypot(b[0] - a[0], b[1] - a[1])
+  const total = points.slice(1).reduce((sum, p, i) => sum + segment(points[i], p), 0)
+  let remaining = total / 2
+  for (let i = 1; i < points.length; i++) {
+    const length = segment(points[i - 1], points[i])
+    if (length >= remaining && length > 0) {
+      const f = remaining / length
+      const [a, b] = [points[i - 1], points[i]]
+      return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]
+    }
+    remaining -= length
+  }
+  return points[points.length - 1]
+}

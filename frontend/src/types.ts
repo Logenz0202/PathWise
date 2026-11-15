@@ -5,9 +5,13 @@ export type FuelType = 'petrol' | 'diesel' | 'lpg' | 'electric'
 export type Priority = 'balanced' | 'fastest' | 'cheapest' | 'greenest'
 export type Currency = 'EUR' | 'PLN'
 export type Language = 'en' | 'pl'
+// Real road route from OSRM, or an estimate when routing was unavailable
+export type RouteSource = 'osrm' | 'estimate'
 
 export interface TransportOption {
   mode: TransportMode
+  // Road distance for car and bus, estimated rail distance for the train
+  distance_km: number
   time_minutes: number
   cost_eur: number
   co2_kg: number
@@ -42,15 +46,31 @@ export interface Comparison extends ComparisonSummary {
   car_fuel_price_per_liter: number | null
   priority: Priority | null
   notes: string | null
+  // Where the road distance and times came from; null for comparisons saved before routing
+  route_source: RouteSource | null
   ai_advice: Advice | null
   // Plain-text recommendation saved by earlier versions (before structured advice)
   ai_text: string | null
 }
 
-export interface ComparisonRequest {
+// Road route between two cities with door-to-door times for an average car (GET /api/geo/route)
+export interface RouteInfo {
   origin: string
   destination: string
   distance_km: number
+  source: RouteSource
+  // [lat, lng] points along the road; null for estimates
+  geometry: [number, number][] | null
+  car: TransportOption
+  train: TransportOption
+  bus: TransportOption
+}
+
+export interface ComparisonRequest {
+  origin: string
+  destination: string
+  // Only when the user typed their own distance; otherwise the API uses the road route
+  distance_km?: number
   priority: Priority
   notes?: string
   car_name?: string

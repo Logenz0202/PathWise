@@ -26,51 +26,6 @@ export function maxTierForZoom(zoom: number): City['tier'] {
   return 4
 }
 
-// Highway corridor distances (km) for precision
-const KNOWN_ROAD_DISTANCES: Record<string, number> = {
-  'warsaw-berlin': 572,
-  'warsaw-krakow': 295,
-  'warsaw-wroclaw': 355,
-  'warsaw-gdansk': 342,
-  'warsaw-poznan': 310,
-  'warsaw-prague': 678,
-  'warsaw-bratislava': 650,
-  'warsaw-vilnius': 460,
-  'warsaw-minsk': 550,
-  'warsaw-brest': 200,
-  'warsaw-grodno': 270,
-  'warsaw-lviv': 395,
-  'warsaw-kyiv': 780,
-  'krakow-prague': 535,
-  'krakow-bratislava': 380,
-  'krakow-wroclaw': 270,
-  'krakow-gdansk': 590,
-  'krakow-berlin': 600,
-  'krakow-lviv': 330,
-  'wroclaw-berlin': 340,
-  'wroclaw-prague': 330,
-  'berlin-prague': 350,
-  'berlin-munich': 585,
-  'berlin-hamburg': 290,
-  'berlin-cologne': 575,
-  'berlin-frankfurt': 550,
-  'berlin-leipzig': 190,
-  'berlin-dresden': 190,
-  'prague-bratislava': 330,
-  'prague-brno': 205,
-  'prague-ostrava': 370,
-  'bratislava-kosice': 400,
-  'minsk-brest': 350,
-  'minsk-grodno': 290,
-  'minsk-gomel': 310,
-  'vilnius-kaunas': 105,
-  'vilnius-klaipeda': 310,
-  'kyiv-lviv': 540,
-  'kyiv-odesa': 475,
-  'kyiv-kharkiv': 480,
-  'kyiv-dnipro': 480,
-}
-
 // Popular route presets
 export const POPULAR_ROUTES = [
   { origin: 'Warsaw', destination: 'Berlin', label: 'Warsaw ⇄ Berlin' },
@@ -121,30 +76,4 @@ export function searchCities(query: string, limit = 8): City[] {
     if (prefix.length >= limit) break
   }
   return [...prefix, ...contains, ...country].slice(0, limit)
-}
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLon = ((lng2 - lng1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-export function calculateRoadDistance(originName: string, destName: string): number | null {
-  if (!originName || !destName) return null
-  if (normalize(originName) === normalize(destName)) return 0
-
-  const c1 = findCityByName(originName)
-  const c2 = findCityByName(destName)
-  if (!c1 || !c2) return 350
-  if (c1.id === c2.id) return 0
-
-  const known = KNOWN_ROAD_DISTANCES[`${c1.id}-${c2.id}`] || KNOWN_ROAD_DISTANCES[`${c2.id}-${c1.id}`]
-  if (known) return known
-
-  // Straight line * typical road detour factor
-  return Math.round(haversineKm(c1.lat, c1.lng, c2.lat, c2.lng) * 1.23)
 }

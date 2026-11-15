@@ -86,6 +86,13 @@ export default function ComparisonResults({ comparison, backTo, backLabel }: Com
       </div>
 
       <CarDetails comparison={comparison} carLabel={carLabel} />
+
+      {/* Where the distances and times came from (older comparisons don't say) */}
+      {comparison.route_source && (
+        <p className="px-1 text-xs text-slate-400">
+          {t(comparison.route_source === 'osrm' ? 'results.sourceOsrm' : 'results.sourceEstimate')}
+        </p>
+      )}
     </div>
   )
 }

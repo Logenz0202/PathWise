@@ -1,28 +1,25 @@
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Loader2 } from 'lucide-react'
 import TextInput from '../ui/TextInput'
 import { MODES, MODE_KEYS } from '../../utils/transport'
 import { useI18n } from '../../i18n/LanguageContext'
-import type { TransportMode } from '../../types'
 import { cx } from '../../utils/cx'
+import type { RouteInfo } from '../../types'
 
 interface DistanceCardProps {
-  autoDistance: number | null
-  // Distance the comparison will use: the manual value if one is set, otherwise the automatic one
-  distance: number | null
+  // Route from the API (already stretched to a typed distance); null while loading
+  route: RouteInfo | null
+  loading: boolean
   manual: boolean
   onToggleManual: () => void
   manualDistance: string
   onManualDistanceChange: (value: string) => void
 }
 
-// Rough door-to-door time per mode, shown before comparing
-const estimateMinutes = (mode: TransportMode, km: number) =>
-  (km / MODES[mode].speedKmh) * 60 + MODES[mode].accessMinutes
-
-// Road distance between the chosen cities, an optional manual override and a quick time preview
+// Road distance between the chosen cities, an optional manual override and a door-to-door time
+// preview per mode (for an average car; the comparison uses the chosen car)
 export default function DistanceCard({
-  autoDistance,
-  distance,
+  route,
+  loading,
   manual,
   onToggleManual,
   manualDistance,
@@ -42,18 +39,32 @@ export default function DistanceCard({
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           {t('sidebar.distance')}
         </span>
-        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-semibold text-[10px] rounded-full">
-          {t('sidebar.auto')}
-        </span>
+        {route && (
+          <span
+            className={cx(
+              'px-2 py-0.5 font-semibold text-[10px] rounded-full',
+              route.source === 'osrm' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+            )}
+          >
+            {t(route.source === 'osrm' ? 'sidebar.routeOsrm' : 'sidebar.routeEstimate')}
+          </span>
+        )}
       </div>
 
       <div className="flex items-baseline justify-between">
-        <div>
-          <span className="text-2xl font-black text-slate-900 tracking-tight">
-            {distance == null || Number.isInteger(distance) ? distance : formatNumber(distance)}
+        {route ? (
+          <div>
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
+              {formatNumber(route.distance_km, Number.isInteger(route.distance_km) ? 0 : 1)}
+            </span>
+            <span className="text-sm font-semibold text-slate-500 ml-1">km</span>
+          </div>
+        ) : (
+          <span className="flex items-center gap-1.5 h-8 text-xs text-slate-500">
+            {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            {loading ? t('sidebar.routeLoading') : '—'}
           </span>
-          <span className="text-sm font-semibold text-slate-500 ml-1">km</span>
-        </div>
+        )}
         <button
           type="button"
           onClick={onToggleManual}
@@ -71,13 +82,14 @@ export default function DistanceCard({
             type="number"
             min="1"
             value={manualDistance}
-            placeholder={t('sidebar.defaultDistance', { km: autoDistance ?? '' })}
+            // While the field is empty, `route` is the plain road route
+            placeholder={t('sidebar.defaultDistance', { km: route ? formatNumber(route.distance_km, 0) : '' })}
             onChange={(e) => onManualDistanceChange(e.target.value)}
           />
         </div>
       )}
 
-      {distance != null && distance > 0 && (
+      {route && (
         <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-primary-200/60 text-center">
           {MODE_KEYS.map((mode) => {
             const { icon: Icon, text, labelKey } = MODES[mode]
@@ -87,7 +99,7 @@ export default function DistanceCard({
                   <Icon className={`w-3 h-3 ${text}`} />
                   <span>{t(labelKey)}</span>
                 </div>
-                <p className="text-xs font-bold text-slate-800">{formatDuration(estimateMinutes(mode, distance))}</p>
+                <p className="text-xs font-bold text-slate-800">{formatDuration(route[mode].time_minutes)}</p>
               </div>
             )
           })}

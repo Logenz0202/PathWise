@@ -20,6 +20,8 @@ class Comparison(Base):
     origin = Column(String, nullable=False)
     destination = Column(String, nullable=False)
     distance_km = Column(Float, nullable=False)
+    # Where the road distance and driving times came from: "osrm" or "estimate"
+    route_source = Column(String, nullable=True)
 
     # Car used (copied from the selected preset, so it survives renaming/deleting the preset;
     # all empty means the average-car estimate was used)
@@ -41,6 +43,9 @@ class Comparison(Base):
     bus_cost_eur = Column(Float, nullable=True)
     bus_co2_kg = Column(Float, nullable=True)
 
+    # The train runs on its own (estimated) rail distance; car and bus use distance_km
+    train_distance_km = Column(Float, nullable=True)
+
     # What the advice was based on: the traveller's priority and optional note
     priority = Column(String, nullable=True)
     notes = Column(String, nullable=True)
@@ -56,8 +61,11 @@ class Comparison(Base):
         time_minutes = getattr(self, f"{prefix}_time_minutes")
         if time_minutes is None:
             return None
+        # Older rows have no rail distance: fall back to the road distance
+        distance = self.train_distance_km if mode == TransportMode.TRAIN else None
         return {
             "mode": mode,
+            "distance_km": distance or self.distance_km,
             "time_minutes": time_minutes,
             "cost_eur": getattr(self, f"{prefix}_cost_eur"),
             "co2_kg": getattr(self, f"{prefix}_co2_kg"),

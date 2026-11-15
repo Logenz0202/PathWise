@@ -21,7 +21,7 @@ from app.services.eco_coach import (
 def make_options(car, train, bus):
     """Build {mode: TransportOption} from (time_minutes, cost_eur, co2_kg) tuples."""
     return {
-        mode: TransportOption(mode=TransportMode(mode), time_minutes=t, cost_eur=c, co2_kg=co2)
+        mode: TransportOption(mode=TransportMode(mode), distance_km=295, time_minutes=t, cost_eur=c, co2_kg=co2)
         for mode, (t, c, co2) in {"car": car, "train": train, "bus": bus}.items()
     }
 

@@ -103,3 +103,16 @@ def calculate_road_distance(origin: str, destination: str) -> float:
         return round(straight_km * 1.23, 1)
 
     return 350.0
+
+
+def resolve_trip(origin: str, destination: str) -> tuple[dict, dict]:
+    """Both cities of a trip from the city list. Raises ValueError for unknown or identical cities."""
+    cities = []
+    for name in (origin, destination):
+        city = find_city(name)
+        if city is None:
+            raise ValueError(f"Unknown city: {name}")
+        cities.append(city)
+    if cities[0]["id"] == cities[1]["id"]:
+        raise ValueError("Origin and destination are the same city")
+    return cities[0], cities[1]

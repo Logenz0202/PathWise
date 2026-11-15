@@ -12,7 +12,8 @@ from app.schemas.comparison import (
 )
 from app.services.calculator import calculate_comparison
 from app.services.eco_coach import eco_coach
-from app.services.geo import calculate_road_distance
+from app.services.geo import resolve_trip
+from app.services.routing import get_road_route
 
 router = APIRouter(prefix="/api/comparisons", tags=["comparisons"])
 
@@ -23,14 +24,21 @@ async def create_comparison(
     db: Session = Depends(get_db)
 ):
     """Create a new transport comparison."""
-    # Determine distance (auto-calculate if not provided)
-    distance_km = request.distance_km
-    if distance_km is None or distance_km <= 0:
-        distance_km = calculate_road_distance(request.origin, request.destination)
+    try:
+        origin, destination = resolve_trip(request.origin, request.destination)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
 
-    # Calculate all options
+    # Real road route; a distance typed by the user (e.g. a detour) stretches it
+    route = await get_road_route(db, origin, destination)
+    if request.distance_km:
+        route = route.scaled_to(request.distance_km)
+    distance_km = route.distance_km
+
     results = calculate_comparison(
-        distance_km=distance_km,
+        route,
+        origin,
+        destination,
         car_fuel_type=request.car_fuel_type,
         car_consumption_l_per_100km=request.car_consumption_l_per_100km,
         car_fuel_price_per_liter=request.car_fuel_price_per_liter,
@@ -58,6 +66,7 @@ async def create_comparison(
         origin=request.origin,
         destination=request.destination,
         distance_km=distance_km,
+        route_source=route.source,
         car_name=request.car_name,
         priority=request.priority,
         notes=notes,
@@ -67,6 +76,7 @@ async def create_comparison(
         car_time_minutes=results["car"].time_minutes,
         car_cost_eur=results["car"].cost_eur,
         car_co2_kg=results["car"].co2_kg,
+        train_distance_km=results["train"].distance_km,
         train_time_minutes=results["train"].time_minutes,
         train_cost_eur=results["train"].cost_eur,
         train_co2_kg=results["train"].co2_kg,

@@ -18,7 +18,12 @@ class Settings(BaseSettings):
     # OpenRouter API
     OPENROUTER_API_KEY: Optional[str] = None
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-    OPENROUTER_MODEL: str = "google/gemma-4-26b-a4b-it"
+    # The free variant of the model (":free"): no cost, but rate-limited; when a limit is hit the
+    # Eco-Coach falls back to its rule-based advice
+    OPENROUTER_MODEL: str = "google/gemma-4-26b-a4b-it:free"
+    # Free models are shared and often busy: OpenRouter tries these in order when the main one fails.
+    # Set as a JSON list in .env, e.g. OPENROUTER_FALLBACK_MODELS=["a/b:free"]
+    OPENROUTER_FALLBACK_MODELS: List[str] = ["google/gemma-4-31b-it:free", "nvidia/nemotron-3.5-super-vl:free"]
 
     # Road routing (OpenStreetMap data, no key needed). Empty disables it: distances and times are
     # then estimated from the straight-line distance.

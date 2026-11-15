@@ -18,7 +18,6 @@ export default function HistoryList({ onViewComparison, onStartComparing }: Hist
   const { get, delete: del, loading, error } = useApi()
   const { t } = useI18n()
   const [comparisons, setComparisons] = useState<ComparisonSummary[]>([])
-  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   useEffect(() => {
     get<ComparisonSummary[]>('/comparisons/')
@@ -26,19 +25,10 @@ export default function HistoryList({ onViewComparison, onStartComparing }: Hist
       .catch((err) => console.error('Failed to load history:', err))
   }, [get])
 
+  // Confirmed in the delete button's popover, which also shows an error if this throws
   const handleDelete = async (id: number) => {
-    if (!confirm(t('history.confirmDelete'))) return
-
-    setDeletingId(id)
-    try {
-      await del(`/comparisons/${id}`)
-      setComparisons((prev) => prev.filter((c) => c.id !== id))
-    } catch (err) {
-      console.error('Failed to delete:', err)
-      alert(t('history.deleteFailed'))
-    } finally {
-      setDeletingId(null)
-    }
+    await del(`/comparisons/${id}`)
+    setComparisons((prev) => prev.filter((c) => c.id !== id))
   }
 
   if (loading && comparisons.length === 0) return <LoadingState message={t('history.loading')} />
@@ -74,7 +64,6 @@ export default function HistoryList({ onViewComparison, onStartComparing }: Hist
             comparison={comparison}
             onOpen={() => onViewComparison(comparison.id)}
             onDelete={() => handleDelete(comparison.id)}
-            deleting={deletingId === comparison.id}
           />
         ))}
       </div>

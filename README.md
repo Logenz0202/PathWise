@@ -24,7 +24,7 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 | Backend | Python 3.15, **FastAPI**, SQLAlchemy 2, Pydantic 2, httpx |
 | Database | **SQLite** (a single file, created on first start; no database server) |
 | Frontend | **React 19** + **TypeScript** (strict), **React Router 8**, Vite 8, Tailwind CSS 4, **Leaflet** / react-leaflet, lucide-react icons |
-| AI | LLM via the **OpenRouter** API (model configurable, default `google/gemma-4-26b-a4b-it`) |
+| AI | LLM via the **OpenRouter** API, free model by default (`google/gemma-4-26b-a4b-it:free`; configurable with `OPENROUTER_MODEL`) |
 | Data | City list generated from **GeoNames**; map tiles from **OpenStreetMap** |
 | Infrastructure | Docker Compose (database + API + frontend) |
 | Quality | **pytest** + pytest-cov, **ruff**, GitHub Actions CI |
@@ -35,7 +35,7 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 - **Routing that is free, polite and offline-safe** – `services/routing.py` asks the public OSRM server for the route once per city pair (with an identifying User-Agent and at most one request per second, as its usage policy asks) and stores it in the database; the reverse trip reuses it. The line is simplified (Douglas–Peucker) to ~300 points for the map. If OSRM is down or `OSRM_URL` is empty, a straight-line estimate is used and the UI says so.
 - **A transparent time model** – every rule in `services/calculator.py` is a named constant: traffic allowance and rest breaks for the car; for the bus, each road segment from OSRM capped at the 100 km/h coach limit, stops and the 45-minute break EU rules require after 4.5 h; for the train (no free rail router covers the region), a rail distance from the straight line, average long-distance train speeds per country, slower regional trains on short trips, and extra time at borders (passport control outside Schengen, changing trains where standard gauge meets the broad gauge of Lithuania, Belarus and Ukraine). Train times are labelled as estimates.
 - **Free-text context, safely** – the traveller's note is passed to the model as quoted context with an instruction to ignore any instructions inside it (a simple prompt-injection guard), and is limited to 200 characters.
-- **AI with a safe fallback** – any OpenRouter problem (no key, network, quota, invalid reply) is logged and replaced by rule-based advice in the same structure and the user's language.
+- **Free AI only, with a safe fallback** – the Eco-Coach only ever calls OpenRouter's free models (ids ending in `:free`; anything else is refused), so nobody needs paid credits. Free models are shared and often busy, so the request lists free fallbacks that OpenRouter tries in order (`OPENROUTER_FALLBACK_MODELS`), with reasoning switched off so "thinking" models still answer within the token limit. If all of that fails (no key, network, rate limit, invalid or empty reply), the problem is logged and rule-based advice in the same structure and the user's language is used instead.
 - **5,700 markers without lag** – cities are drawn on a Leaflet canvas layer and filtered by zoom level and viewport, so only relevant markers are rendered.
 - **Reproducible place data** – `scripts/build_cities.mjs` downloads every city and town from OpenStreetMap (Overpass API, no key) and builds the list: Latin-script names (English for Ukraine and Belarus), Polish and local names as search aliases, zoom tiers by population, duplicates removed. Names used by the earlier GeoNames-based list are kept as aliases (`scripts/legacy_names.json`), so saved trips like *Hannover* or *Grodno* still resolve.
 - **Comparisons keep their own copy of the car** – the preset's name and specs are copied into each saved comparison, so History stays accurate after a car is renamed or deleted.
@@ -107,7 +107,7 @@ PathWise/
 
 There are two ways to run PathWise: **with Docker** (one command) or **without Docker** (API and frontend in two terminals). Neither needs a database server: the data lives in a SQLite file that is created on first start.
 
-**Optional – AI key:** copy `.env.example` to `.env` in the project root and set `OPENROUTER_API_KEY` (get one at https://openrouter.ai/keys). Both ways read it from there. Without a key the app works the same, using the offline recommendation.
+**Optional – AI key:** copy `.env.example` to `.env` in the project root and set `OPENROUTER_API_KEY` (get one at https://openrouter.ai/keys). Both ways read it from there. Only free models are used, so a key from a free OpenRouter account is enough; no credits are needed. Free models are rate-limited: when the main one is busy, free fallback models are tried, and if they are busy too, the offline recommendation is used. Without a key the app works the same, using the offline recommendation.
 
 ### With Docker
 Requirements: **Docker** with Docker Compose.

@@ -1,4 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react'
+import ConfirmButton from '../ui/ConfirmButton'
 import IconButton from '../ui/IconButton'
 import { useI18n } from '../../i18n/LanguageContext'
 import { fuelProfile } from '../../utils/vehicle'
@@ -11,7 +12,7 @@ interface CarRowProps {
   // Whether this preset is the one the planner currently uses
   inUse: boolean
   onEdit: () => void
-  onDelete: () => void
+  onDelete: () => Promise<void>
 }
 
 // A saved car preset in the My Cars list
@@ -36,12 +37,15 @@ export default function CarRow({ car, summary, inUse, onEdit, onDelete }: CarRow
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <IconButton icon={Pencil} title={t('cars.edit')} label={t('cars.editLabel', { name: car.name })} onClick={onEdit} />
-        <IconButton
+        <ConfirmButton
           icon={Trash2}
-          tone="danger"
           title={t('cars.delete')}
           label={t('cars.deleteLabel', { name: car.name })}
-          onClick={onDelete}
+          message={t('cars.confirmDelete', { name: car.name })}
+          confirmLabel={t('cars.delete')}
+          cancelLabel={t('cars.cancel')}
+          errorMessage={t('cars.deleteFailed')}
+          onConfirm={onDelete}
         />
       </div>
     </div>

@@ -141,7 +141,8 @@ export default function InteractiveMap({
   return (
     <div
       className={cx(
-        'pw-map relative isolate w-full h-full flex-1 min-h-[480px] lg:min-h-0',
+        // @container: the legend positions itself by the map's width, not the window's
+        'pw-map @container relative isolate w-full h-full flex-1 min-h-[480px] lg:min-h-0',
         'rounded-2xl overflow-hidden border border-slate-800 shadow-2xl',
         darkTiles && 'pw-dark-tiles'
       )}

@@ -1,5 +1,5 @@
 import { Car, ChevronRight, Clock, Trash2 } from 'lucide-react'
-import IconButton from '../ui/IconButton'
+import ConfirmButton from '../ui/ConfirmButton'
 import { useCurrency } from '../../utils/currency'
 import { useI18n } from '../../i18n/LanguageContext'
 import { MODES, MODE_KEYS } from '../../utils/transport'
@@ -10,13 +10,12 @@ import type { ComparisonSummary } from '../../types'
 interface HistoryCardProps {
   comparison: ComparisonSummary
   onOpen: () => void
-  onDelete: () => void
-  deleting: boolean
+  onDelete: () => Promise<void>
 }
 
 // One saved comparison: route, when, which car, and a time/cost/CO₂ preview per mode.
 // The whole card opens the result; it's a div with role="button" because it contains the delete button.
-export default function HistoryCard({ comparison, onOpen, onDelete, deleting }: HistoryCardProps) {
+export default function HistoryCard({ comparison, onOpen, onDelete }: HistoryCardProps) {
   const { formatMoney } = useCurrency()
   const { t, formatNumber, formatDuration, timeAgo } = useI18n()
 
@@ -57,16 +56,15 @@ export default function HistoryCard({ comparison, onOpen, onDelete, deleting }: 
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <IconButton
+          <ConfirmButton
             icon={Trash2}
-            tone="danger"
             title={t('history.delete')}
             label={t('history.deleteLabel', { origin: comparison.origin, destination: comparison.destination })}
-            busy={deleting}
-            onClick={(e) => {
-              e.stopPropagation() // don't open the card
-              onDelete()
-            }}
+            message={t('history.confirmDelete')}
+            confirmLabel={t('history.delete')}
+            cancelLabel={t('cars.cancel')}
+            errorMessage={t('history.deleteFailed')}
+            onConfirm={onDelete}
           />
           <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all" />
         </div>

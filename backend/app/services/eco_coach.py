@@ -140,8 +140,24 @@ def best_match(options: dict, priority: str) -> str:
     return min(scores, key=scores.get)
 
 
-def parse_advice(content: str) -> Advice:
+def free_models(models: list[str]) -> list[str]:
+    """Only OpenRouter's free variants (":free"), so running PathWise never needs paid credits.
+
+    Any other model id is skipped with a warning; with none left, the offline advice is used.
+    """
+    free = []
+    for model in dict.fromkeys(models):
+        if model.endswith(":free"):
+            free.append(model)
+        else:
+            logger.warning("Ignoring OpenRouter model %r: only free (':free') models are used", model)
+    return free
+
+
+def parse_advice(content: Optional[str]) -> Advice:
     """Validate the model's reply; tolerate stray text or code fences around the JSON object."""
+    if not isinstance(content, str):
+        raise ValueError("empty reply")  # e.g. a reasoning model that returned no text
     start, end = content.find("{"), content.rfind("}")
     if start == -1 or end <= start:
         raise ValueError("no JSON object in reply")
@@ -152,7 +168,8 @@ class EcoCoachService:
     def __init__(self):
         self.api_key = settings.OPENROUTER_API_KEY
         self.base_url = settings.OPENROUTER_BASE_URL
-        self.model = settings.OPENROUTER_MODEL
+        # Main model first, then the fallbacks OpenRouter tries if it is busy or failing
+        self.models = free_models([settings.OPENROUTER_MODEL, *settings.OPENROUTER_FALLBACK_MODELS])
 
     async def get_recommendation(
         self,
@@ -172,7 +189,7 @@ class EcoCoachService:
         """Structured advice from the LLM, or the offline fallback if that isn't possible."""
         options = {"car": car, "train": train, "bus": bus}
 
-        if not self.api_key:
+        if not self.api_key or not self.models:
             return self._fallback_advice(options, priority, currency, language, car_fuel_type)
 
         prompt = self._build_prompt(
@@ -189,19 +206,24 @@ class EcoCoachService:
                         "X-Title": "PathWise",
                     },
                     json={
-                        "model": self.model,
+                        "model": self.models[0],
+                        "models": self.models,
                         "messages": [
                             {"role": "system", "content": SYSTEM_PROMPT},
                             {"role": "user", "content": prompt},
                         ],
                         "response_format": {"type": "json_object"},
                         "max_tokens": 400,
+                        # Reasoning models would spend the token budget thinking and return no text
+                        "reasoning": {"enabled": False},
                         # Deterministic: the same trip and preferences should get the same advice
                         "temperature": 0,
                     },
                 )
                 response.raise_for_status()
-                content = response.json()["choices"][0]["message"]["content"]
+                body = response.json()
+                logger.info("Eco-Coach advice from %s", body.get("model", "unknown model"))
+                content = body["choices"][0]["message"]["content"]
                 return parse_advice(content)
         except (httpx.HTTPError, KeyError, ValueError, ValidationError) as exc:
             # Network/quota problems or a reply that isn't valid advice: use the offline advice

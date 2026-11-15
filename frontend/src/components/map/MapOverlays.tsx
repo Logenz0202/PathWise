@@ -57,13 +57,15 @@ export function QuickRoutes({ onSelect }: { onSelect: (origin: string, destinati
   )
 }
 
-// Marker colours and how many cities are shown at the current zoom
+// Marker colours and how many cities are shown at the current zoom. Sits at the bottom next to the
+// map credits when the map is wide enough for both, otherwise just above them
 export function MapLegend({ visibleCount }: { visibleCount: number }) {
   const { t, stableText } = useI18n()
   return (
     <div
       className={cx(
-        'absolute bottom-8 left-5 z-1000 hidden sm:flex items-center gap-4 px-3 py-2 pointer-events-none',
+        'absolute bottom-8 @min-[780px]:bottom-2 left-5 z-1000 hidden sm:flex items-center gap-4 px-3 py-2',
+        'pointer-events-none',
         'bg-slate-900/85 backdrop-blur-md border border-slate-800 rounded-xl text-xs text-slate-400'
       )}
     >

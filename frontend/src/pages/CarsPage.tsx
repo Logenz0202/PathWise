@@ -9,7 +9,6 @@ import type { CarsState } from '../hooks/useCars'
 import { describeCar } from '../utils/vehicle'
 import { useCurrency } from '../utils/currency'
 import { useI18n } from '../i18n/LanguageContext'
-import type { CarProfile } from '../types'
 
 // My Cars (/cars): create, edit and delete the car presets the planner can use
 export default function CarsPage({ cars: carsState }: { cars: CarsState }) {
@@ -18,15 +17,6 @@ export default function CarsPage({ cars: carsState }: { cars: CarsState }) {
   const { formatMoney } = useCurrency()
   const [editing, setEditing] = useState<'new' | number | null>(null)
   const fmt = { t, formatNumber, formatMoney }
-
-  const handleDelete = async (car: CarProfile) => {
-    if (!confirm(t('cars.confirmDelete', { name: car.name }))) return
-    try {
-      await deleteCar(car.id)
-    } catch {
-      alert(t('cars.deleteFailed'))
-    }
-  }
 
   return (
     <Panel>
@@ -77,7 +67,7 @@ export default function CarsPage({ cars: carsState }: { cars: CarsState }) {
               summary={describeCar(car, fmt)}
               inUse={selectedCar?.id === car.id}
               onEdit={() => setEditing(car.id)}
-              onDelete={() => handleDelete(car)}
+              onDelete={() => deleteCar(car.id)}
             />
           )
         )}

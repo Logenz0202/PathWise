@@ -1,32 +1,30 @@
 // Panels drawn over the map (outside <MapContainer>): route status, quick routes and the legend
-import { Compass } from 'lucide-react'
-import { POPULAR_ROUTES } from '../../utils/geoData'
-import { useI18n } from '../../i18n/LanguageContext'
-import { cx } from '../../utils/cx'
+import { Button } from '@/components/ui/button'
+import { POPULAR_ROUTES } from '@/utils/geoData'
+import { useI18n } from '@/i18n/LanguageContext'
+import { cn } from '@/lib/utils'
 
-// Next step for the user, or the active route once both cities are set
+// Shared look of the map's floating panels
+const panel = 'rounded-lg border bg-card/90 backdrop-blur-sm'
+
+// Next step for the user, or the chosen route once both places are set
 export function RouteStatus({ origin, destination }: { origin: string; destination: string }) {
   const { t } = useI18n()
   return (
-    <div
-      className={cx(
-        'pointer-events-auto flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300',
-        'bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl shadow-lg'
+    <div className={cn(panel, 'pointer-events-auto px-3 py-1.5 text-xs')}>
+      {!origin ? (
+        <span className="text-muted-foreground">{t('map.step1')}</span>
+      ) : !destination ? (
+        <span className="text-muted-foreground">{t('map.step2')}</span>
+      ) : (
+        <span className="flex items-center gap-1.5 font-medium">
+          <span className="size-2 rounded-full bg-start" />
+          {origin}
+          <span className="text-muted-foreground">→</span>
+          <span className="size-2 rounded-full bg-finish" />
+          {destination}
+        </span>
       )}
-    >
-      <Compass className="w-4 h-4 text-primary-400 animate-spin-slow" />
-      <span>
-        {!origin ? (
-          <strong className="text-emerald-400">{t('map.step1')}</strong>
-        ) : !destination ? (
-          <strong className="text-indigo-400">{t('map.step2')}</strong>
-        ) : (
-          <span className="text-emerald-300 font-medium">
-            {t('map.routeActive')} <span className="text-white">{origin}</span> →{' '}
-            <span className="text-white">{destination}</span>
-          </span>
-        )}
-      </span>
     </div>
   )
 }
@@ -35,55 +33,49 @@ export function RouteStatus({ origin, destination }: { origin: string; destinati
 export function QuickRoutes({ onSelect }: { onSelect: (origin: string, destination: string) => void }) {
   const { stableText } = useI18n()
   return (
-    <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 scrollbar-none">
-      <span className="text-[11px] font-semibold text-slate-200 uppercase tracking-wider hidden sm:inline mr-1 drop-shadow-sm">
-        {stableText('map.popular')}
-      </span>
+    <div className="pointer-events-auto flex max-w-full items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+      <span className="mr-1 hidden text-xs text-muted-foreground sm:inline">{stableText('map.popular')}</span>
       {POPULAR_ROUTES.map((route) => (
-        <button
+        <Button
           key={route.label}
           type="button"
+          size="xs"
+          variant="outline"
           onClick={() => onSelect(route.origin, route.destination)}
-          className={cx(
-            'px-2.5 py-1 text-xs whitespace-nowrap rounded-lg border shadow-xs backdrop-blur-md transition-all',
-            'bg-slate-900/85 border-slate-700/60 text-slate-200',
-            'hover:bg-primary-600/60 hover:border-primary-500/50 hover:text-white'
-          )}
+          className="bg-card/90 font-normal whitespace-nowrap backdrop-blur-sm"
         >
           {route.label}
-        </button>
+        </Button>
       ))}
     </div>
   )
 }
 
-// Marker colours and how many cities are shown at the current zoom. Sits at the bottom next to the
+// Marker colours and how many places are shown at the current zoom. Sits at the bottom next to the
 // map credits when the map is wide enough for both, otherwise just above them
 export function MapLegend({ visibleCount }: { visibleCount: number }) {
-  const { t, stableText } = useI18n()
+  const { t } = useI18n()
   return (
     <div
-      className={cx(
-        'absolute bottom-8 @min-[780px]:bottom-2 left-5 z-1000 hidden sm:flex items-center gap-4 px-3 py-2',
-        'pointer-events-none',
-        'bg-slate-900/85 backdrop-blur-md border border-slate-800 rounded-xl text-xs text-slate-400'
+      className={cn(
+        panel,
+        'pointer-events-none absolute bottom-8 left-3 z-1000 hidden items-center gap-4 px-3 py-1.5 text-xs sm:flex',
+        '@min-[780px]:bottom-2'
       )}
     >
-      <div className="flex items-center gap-1.5">
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-        {stableText('map.start')}
-      </div>
-      <div className="flex items-center gap-1.5">
-        <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-        {stableText('map.finish')}
-      </div>
-      <div className="flex items-center gap-1.5">
-        <span className="w-2 h-2 rounded-full bg-sky-400 ring-2 ring-slate-900" />
-        {stableText('map.city')}
-      </div>
-      <span className="text-[11px] text-slate-500 border-l border-slate-700 pl-3">
-        {t('map.zoomHint', { count: visibleCount })}
+      <span className="flex items-center gap-1.5">
+        <span className="size-2 rounded-full bg-start" />
+        {t('map.start')}
       </span>
+      <span className="flex items-center gap-1.5">
+        <span className="size-2 rounded-full bg-finish" />
+        {t('map.finish')}
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className="size-1.5 rounded-full bg-[#8ab4cc]" />
+        {t('map.city')}
+      </span>
+      <span className="border-l pl-3 text-muted-foreground">{t('map.zoomHint', { count: visibleCount })}</span>
     </div>
   )
 }

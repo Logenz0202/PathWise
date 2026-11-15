@@ -1,7 +1,7 @@
 import { Clock, Leaf, Wallet, type LucideIcon } from 'lucide-react'
-import type { I18n } from '../../i18n/LanguageContext'
-import type { TranslationKey } from '../../i18n/translations'
-import type { TransportMode, TransportOption } from '../../types'
+import type { I18n } from '@/i18n/LanguageContext'
+import type { TranslationKey } from '@/i18n/translations'
+import type { TransportMode, TransportOption } from '@/types'
 
 export type MetricKey = 'time_minutes' | 'cost_eur' | 'co2_kg'
 

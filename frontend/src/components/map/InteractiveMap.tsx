@@ -8,6 +8,7 @@ import { MapLegend, QuickRoutes, RouteStatus } from './MapOverlays'
 import {
   DEST_ICON,
   LABEL_ZOOM_BY_TIER,
+  MAP_COLORS,
   ORIGIN_ICON,
   OSM_ATTRIBUTION,
   OSM_TILES,
@@ -23,28 +24,30 @@ import {
   MAP_MAX_BOUNDS,
   maxTierForZoom,
   findCityByName,
-} from '../../utils/geoData'
-import { useI18n } from '../../i18n/LanguageContext'
-import { cx } from '../../utils/cx'
-import type { City, RouteInfo } from '../../types'
+} from '@/utils/geoData'
+import { Button } from '@/components/ui/button'
+import { useI18n } from '@/i18n/LanguageContext'
+import { cn } from '@/lib/utils'
+import type { City, RouteInfo } from '@/types'
 
-// Route line (glow, line, animated dashes) with the distance badge in the middle; no badge while loading
+// Route line (a dark casing, the orange line and light dashes moving along it) with the distance in
+// the middle; no distance while loading
 function RouteLine({ points, mid, distanceKm }: { points: LatLngTuple[]; mid: LatLngTuple; distanceKm?: number }) {
   return (
     <>
       <Polyline
         positions={points}
-        pathOptions={{ color: '#38bdf8', weight: 10, opacity: 0.25, lineCap: 'round' }}
+        pathOptions={{ color: MAP_COLORS.casing, weight: 7, opacity: 0.8, lineCap: 'round', lineJoin: 'round' }}
         interactive={false}
       />
       <Polyline
         positions={points}
-        pathOptions={{ color: '#38bdf8', weight: 4, opacity: 0.9, lineCap: 'round' }}
+        pathOptions={{ color: MAP_COLORS.route, weight: 4, lineCap: 'round', lineJoin: 'round' }}
         interactive={false}
       />
       <Polyline
         positions={points}
-        pathOptions={{ color: '#ffffff', weight: 2.5, className: 'pw-route-dash' }}
+        pathOptions={{ color: MAP_COLORS.dashes, weight: 2, opacity: 0.9, className: 'pw-route-dash' }}
         interactive={false}
       />
       {distanceKm != null && <Marker position={mid} icon={distanceIcon(distanceKm)} interactive={false} />}
@@ -56,7 +59,7 @@ function RouteLine({ points, mid, distanceKm }: { points: LatLngTuple[]; mid: La
 function EndpointMarker({ city, icon, labelClass, onClick }: { city: City; icon: DivIcon; labelClass: string; onClick: () => void }) {
   return (
     <Marker position={[city.lat, city.lng]} icon={icon} zIndexOffset={1000} eventHandlers={{ click: onClick }}>
-      <Tooltip permanent direction="bottom" offset={[0, 14]} className={cx('pw-city-label', labelClass)}>
+      <Tooltip permanent direction="bottom" offset={[0, 14]} className={cn('pw-city-label', labelClass)}>
         {city.name}
       </Tooltip>
     </Marker>
@@ -140,14 +143,14 @@ export default function InteractiveMap({
 
   return (
     <div
-      className={cx(
+      className={cn(
         // @container: the legend positions itself by the map's width, not the window's
         'pw-map @container relative isolate w-full h-full flex-1 min-h-[480px] lg:min-h-0',
-        'rounded-2xl overflow-hidden border border-slate-800 shadow-2xl',
+        'overflow-hidden rounded-xl border',
         darkTiles && 'pw-dark-tiles'
       )}
     >
-      <div className="absolute top-4 left-4 right-4 z-1000 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+      <div className="pointer-events-none absolute top-3 right-3 left-3 z-1000 flex flex-wrap items-center justify-between gap-2">
         <RouteStatus origin={originCity} destination={destinationCity} />
         <QuickRoutes onSelect={onQuickRouteSelect} />
       </div>
@@ -182,9 +185,9 @@ export default function InteractiveMap({
               radius={RADIUS_BY_TIER[city.tier]}
               renderer={canvasRenderer}
               pathOptions={{
-                color: '#0f172a',
+                color: MAP_COLORS.casing,
                 weight: 1.5,
-                fillColor: city.isCapital ? '#f8fafc' : '#38bdf8',
+                fillColor: city.isCapital ? MAP_COLORS.capital : MAP_COLORS.city,
                 fillOpacity: 0.95,
               }}
               eventHandlers={{ click: () => handleCityClick(city) }}
@@ -226,25 +229,19 @@ export default function InteractiveMap({
             eventHandlers={{ remove: () => setChoiceCity(null) }}
             className="pw-choice-popup"
           >
-            <div className="text-center">
-              <div className="font-bold text-slate-900 mb-2">
-                {choiceCity.name} <span className="font-normal text-slate-500">({t(`country.${choiceCity.code}`)})</span>
-              </div>
+            <div className="space-y-2 text-center">
+              <p className="font-medium">
+                {choiceCity.name} <span className="text-muted-foreground">· {t(`country.${choiceCity.code}`)}</span>
+              </p>
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold"
-                  onClick={() => choose(onSelectOrigin, choiceCity.name)}
-                >
+                <Button type="button" size="xs" variant="outline" onClick={() => choose(onSelectOrigin, choiceCity.name)}>
+                  <span className="size-2 rounded-full bg-start" />
                   {t('map.setStart')}
-                </button>
-                <button
-                  type="button"
-                  className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold"
-                  onClick={() => choose(onSelectDestination, choiceCity.name)}
-                >
+                </Button>
+                <Button type="button" size="xs" variant="outline" onClick={() => choose(onSelectDestination, choiceCity.name)}>
+                  <span className="size-2 rounded-full bg-finish" />
                   {t('map.setFinish')}
-                </button>
+                </Button>
               </div>
             </div>
           </Popup>

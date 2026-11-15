@@ -27,6 +27,12 @@ function App() {
     [updateTrip]
   )
 
+  // A deleted comparison must not be shown from memory (its page, the planner's "Last result")
+  const forgetComparison = useCallback(
+    (id: number) => setLastComparison((last) => (last?.id === id ? null : last)),
+    []
+  )
+
   // New page: start at the top, like a normal page load
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -36,7 +42,7 @@ function App() {
   const activeTab = pathname.startsWith('/comparisons/') ? (openedFrom(state) === 'planner' ? '/' : '/history') : pathname
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-primary-500 selection:text-white">
+    <div className="flex min-h-screen flex-col selection:bg-primary selection:text-primary-foreground">
       <Header activeTab={activeTab} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -54,7 +60,7 @@ function App() {
             }
           />
           <Route path="/comparisons/:id" element={<ComparisonPage cached={lastComparison} onLoaded={showComparison} />} />
-          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/history" element={<HistoryPage onDeleted={forgetComparison} />} />
           <Route path="/cars" element={<CarsPage cars={cars} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

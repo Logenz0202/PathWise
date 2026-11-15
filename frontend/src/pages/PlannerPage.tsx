@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router'
-import InteractiveMap from '../components/map/InteractiveMap'
-import Sidebar from '../components/planner/Sidebar'
-import { useApi } from '../hooks/useApi'
-import type { CarsState } from '../hooks/useCars'
-import { useRoute } from '../hooks/useRoute'
-import { cx } from '../utils/cx'
-import type { Comparison, ComparisonRequest, Priority } from '../types'
+import InteractiveMap from '@/components/map/InteractiveMap'
+import Sidebar from '@/components/planner/Sidebar'
+import { useApi } from '@/hooks/useApi'
+import type { CarsState } from '@/hooks/useCars'
+import { useRoute } from '@/hooks/useRoute'
+import { cn } from '@/lib/utils'
+import type { Comparison, ComparisonRequest, Priority } from '@/types'
 import { comparisonPath, type ComparisonLocationState } from './ComparisonPage'
 
 export interface Trip {
@@ -47,13 +47,13 @@ export default function PlannerPage({ trip, onTripChange, cars, lastComparison, 
   }
 
   return (
-    // Desktop sizing (65px header + 48px padding + 65px footer):
+    // Desktop sizing (57px header + 48px padding + 49px footer):
     // - shorter than 900px: fill the screen below the header; footer sits fully below the fold
     // - 900px and taller: also leave room for the footer so it's fully visible; capped at 820px
     <div
-      className={cx(
+      className={cn(
         'flex flex-col lg:flex-row gap-6 items-stretch',
-        'lg:h-[calc(100vh-113px)] lg:min-h-[560px] lg:[@media(min-height:900px)]:h-[calc(100vh-178px)] lg:max-h-[820px]'
+        'lg:h-[calc(100vh-105px)] lg:min-h-[560px] lg:[@media(min-height:900px)]:h-[calc(100vh-154px)] lg:max-h-[820px]'
       )}
     >
       <Sidebar

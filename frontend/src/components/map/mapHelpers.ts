@@ -1,11 +1,22 @@
 import L, { type LatLngTuple } from 'leaflet'
-import type { City } from '../../types'
+import type { City } from '@/types'
 
 export const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 export const OSM_ATTRIBUTION = [
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   'Routes: <a href="https://project-osrm.org/">OSRM</a>',
 ].join(' · ')
+
+// Leaflet paints routes (SVG) and city dots (canvas) with plain colours, not CSS variables:
+// route is the theme's --primary and casing its --background, in hex. Places are a light blue-grey:
+// visible on the dark map and clearly different from the white capitals
+export const MAP_COLORS = {
+  route: '#fa7c20',
+  casing: '#100e0d',
+  dashes: '#fff3e6',
+  city: '#8ab4cc',
+  capital: '#f3f1ef',
+}
 
 // Zoom level from which each tier gets a permanent text label (others show on hover)
 export const LABEL_ZOOM_BY_TIER: Record<City['tier'], number> = { 1: 0, 2: 7, 3: 8, 4: 10 }
@@ -49,14 +60,14 @@ const endpointIcon = (letter: string, color: string) =>
     html: `<div class="pw-endpoint" style="--pw-color:${color}"><span>${letter}</span></div>`,
   })
 
-export const ORIGIN_ICON = endpointIcon('A', '#10b981')
-export const DEST_ICON = endpointIcon('B', '#6366f1')
+export const ORIGIN_ICON = endpointIcon('A', 'var(--start)')
+export const DEST_ICON = endpointIcon('B', 'var(--finish)')
 
 export const distanceIcon = (km: number) =>
   L.divIcon({
     className: '',
     iconSize: [0, 0],
-    html: `<div class="pw-distance-badge">🚗 ${Math.round(km)} km</div>`,
+    html: `<div class="pw-distance-badge">${Math.round(km)} km</div>`,
   })
 
 // Point halfway along a line, by length (so the distance badge sits in the middle of the road)

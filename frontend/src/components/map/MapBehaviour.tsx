@@ -2,7 +2,7 @@
 import { useEffect } from 'react'
 import { useMap, useMapEvents } from 'react-leaflet'
 import type { LatLngTuple, Map as LeafletMap } from 'leaflet'
-import type { City } from '../../types'
+import type { City } from '@/types'
 
 // Reports zoom + visible bounds changes, so only the cities that matter get rendered
 export function ViewTracker({ onChange }: { onChange: (map: LeafletMap) => void }) {

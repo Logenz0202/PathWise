@@ -1,11 +1,13 @@
-import { Car, Check, Settings2 } from 'lucide-react'
-import Popover from '../ui/Popover'
-import { carDisplayName, describeCar, fuelProfile } from '../../utils/vehicle'
-import { AVERAGE_CARS } from '../../hooks/useCars'
-import { useCurrency } from '../../utils/currency'
-import { useI18n } from '../../i18n/LanguageContext'
-import { cx } from '../../utils/cx'
-import type { CarProfile, SelectableCar } from '../../types'
+import { useState } from 'react'
+import { Car, Check, ChevronUp, Settings2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { carDisplayName, describeCar, fuelProfile } from '@/utils/vehicle'
+import { AVERAGE_CARS } from '@/hooks/useCars'
+import { useCurrency } from '@/utils/currency'
+import { useI18n } from '@/i18n/LanguageContext'
+import { cn } from '@/lib/utils'
+import type { CarProfile, SelectableCar } from '@/types'
 
 interface CarPickerProps {
   cars: CarProfile[]
@@ -19,78 +21,70 @@ interface CarPickerProps {
 export default function CarPicker({ cars, selectedCar, onSelect, onManage }: CarPickerProps) {
   const { t, formatNumber } = useI18n()
   const { formatMoney } = useCurrency()
+  const [open, setOpen] = useState(false)
   const fmt = { t, formatNumber, formatMoney }
   const SelectedIcon = selectedCar ? fuelProfile(selectedCar.fuel_type).icon : Car
 
-  const summary = (
-    <>
-      <SelectedIcon className="w-4 h-4 text-primary-600 shrink-0" />
-      <span className="text-slate-500 shrink-0">{t('car.yourCar')}</span>
-      <span className="font-semibold text-slate-800 truncate">
-        {selectedCar ? carDisplayName(selectedCar, t) : t('car.average')}
-      </span>
-    </>
-  )
+  const option = (car: SelectableCar) => {
+    const active = selectedCar?.id === car.id
+    const Icon = fuelProfile(car.fuel_type).icon
+    return (
+      <button
+        key={car.id}
+        type="button"
+        role="option"
+        aria-selected={active}
+        onClick={() => {
+          onSelect(car)
+          setOpen(false)
+        }}
+        className={cn(
+          'flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left hover:bg-accent',
+          active && 'bg-accent'
+        )}
+      >
+        <Icon className="size-4 shrink-0 text-muted-foreground" />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate">{carDisplayName(car, t)}</span>
+          <span className="block truncate text-xs text-muted-foreground">{describeCar(car, fmt)}</span>
+        </span>
+        {active && <Check className="size-4 shrink-0 text-primary" />}
+      </button>
+    )
+  }
 
   return (
-    <Popover summary={summary} hasPopup="listbox" panelClassName="overflow-hidden">
-      {(close) => {
-        const option = (car: SelectableCar) => {
-          const active = selectedCar?.id === car.id
-          const Icon = fuelProfile(car.fuel_type).icon
-          return (
-            <button
-              key={car.id}
-              type="button"
-              role="option"
-              aria-selected={active}
-              onClick={() => {
-                onSelect(car)
-                close()
-              }}
-              className={cx(
-                'w-full text-left px-3 py-2 flex items-center gap-2.5 transition-colors',
-                active ? 'bg-primary-50' : 'hover:bg-slate-50'
-              )}
-            >
-              <Icon className={cx('w-4 h-4 shrink-0', active ? 'text-primary-600' : 'text-slate-400')} />
-              <span className="min-w-0 flex-1">
-                <span className="block font-semibold text-slate-800 truncate">{carDisplayName(car, t)}</span>
-                <span className="block text-[11px] text-slate-500 truncate">{describeCar(car, fmt)}</span>
-              </span>
-              {active && <Check className="w-4 h-4 text-primary-600 shrink-0" />}
-            </button>
-          )
-        }
-
-        return (
-          <>
-            <div role="listbox" aria-label={t('car.yourCar')} className="max-h-60 overflow-y-auto divide-y divide-slate-100">
-              {AVERAGE_CARS.map(option)}
-              {cars.length > 0 && (
-                <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  {t('car.myCars')}
-                </div>
-              )}
-              {cars.map(option)}
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                close()
-                onManage()
-              }}
-              className={cx(
-                'w-full px-3 py-2 flex items-center gap-2 border-t border-slate-200',
-                'bg-slate-50 hover:bg-slate-100 text-primary-700 font-semibold transition-colors'
-              )}
-            >
-              <Settings2 className="w-4 h-4" />
-              {cars.length ? t('car.manage') : t('car.addFirst')}
-            </button>
-          </>
-        )
-      }}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" className="w-full justify-start font-normal" aria-haspopup="listbox">
+          <SelectedIcon className="text-muted-foreground" />
+          <span className="text-muted-foreground">{t('car.yourCar')}</span>
+          <span className="truncate">{selectedCar ? carDisplayName(selectedCar, t) : t('car.average')}</span>
+          <ChevronUp className="ml-auto text-muted-foreground" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent side="top" align="start" className="w-(--radix-popover-trigger-width) gap-1 p-1">
+        <div role="listbox" aria-label={t('car.yourCar')} className="max-h-64 overflow-y-auto">
+          {AVERAGE_CARS.map(option)}
+          {cars.length > 0 && (
+            <p className="px-2 pt-2 pb-1 text-xs font-medium text-muted-foreground">{t('car.myCars')}</p>
+          )}
+          {cars.map(option)}
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="justify-start border-t"
+          onClick={() => {
+            setOpen(false)
+            onManage()
+          }}
+        >
+          <Settings2 />
+          {cars.length ? t('car.manage') : t('car.addFirst')}
+        </Button>
+      </PopoverContent>
     </Popover>
   )
 }

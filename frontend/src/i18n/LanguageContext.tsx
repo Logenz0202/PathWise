@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import type { Language } from '../types'
+import type { Language } from '@/types'
 import { TRANSLATIONS, type TranslationKey, type Vars } from './translations'
 
 export const LANGUAGES: Record<Language, { label: string; locale: string }> = {

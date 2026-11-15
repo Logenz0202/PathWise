@@ -1,60 +1,85 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
-@theme {
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
+@custom-variant dark (&:is(.dark *));
+
+/* ---------- Theme ----------
+   Dark only (<html class="dark">). Warm neutral greys with one accent:
+   orange for primary actions, plus green and violet for the trip's start (A) and finish (B).
+   Orange, green and violet are the three secondary colours, evenly spaced on the colour wheel. */
+:root {
+  --background: oklch(0.165 0.004 60);
+  --foreground: oklch(0.96 0.004 80);
+  --card: oklch(0.205 0.005 60);
+  --card-foreground: oklch(0.96 0.004 80);
+  --popover: oklch(0.225 0.006 60);
+  --popover-foreground: oklch(0.96 0.004 80);
+  --primary: oklch(0.72 0.18 50);
+  /* Near-black on orange: white on orange fails WCAG contrast */
+  --primary-foreground: oklch(0.2 0.03 50);
+  --secondary: oklch(0.26 0.006 60);
+  --secondary-foreground: oklch(0.96 0.004 80);
+  --muted: oklch(0.26 0.006 60);
+  --muted-foreground: oklch(0.7 0.01 70);
+  --accent: oklch(0.28 0.008 60);
+  --accent-foreground: oklch(0.96 0.004 80);
+  --destructive: oklch(0.66 0.2 25);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.72 0.18 50);
+  --radius: 0.625rem;
+
+  /* Trip endpoints */
+  --start: oklch(0.7 0.16 160);
+  --finish: oklch(0.65 0.2 293);
 }
 
-/* Tailwind 4 defaults that differ from Tailwind 3, kept as they were */
+@theme inline {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-heading: var(--font-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-start: var(--start);
+  --color-finish: var(--finish);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
 @layer base {
-  /* v4 borders default to currentcolor; the UI was designed with gray-200 */
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+  * {
+    @apply border-border outline-ring/50;
   }
-
-  /* v4 buttons get the default cursor */
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
-    cursor: pointer;
+  html {
+    @apply font-sans;
+    color-scheme: dark;
   }
-
   body {
-    font-family: "Inter", system-ui, -apple-system, sans-serif;
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply antialiased bg-background text-foreground;
   }
-}
-
-@utility btn {
-  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-@utility btn-primary {
-  @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
-}
-
-@utility card {
-  @apply bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden transition-shadow duration-200 hover:shadow-md;
-}
-
-
-@keyframes spinSlow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+  /* Tailwind 4 gives buttons the default cursor */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
   }
 }
 
@@ -68,11 +93,6 @@
     transform: translateY(0);
   }
 }
-
-.animate-spin-slow {
-  animation: spinSlow 12s linear infinite;
-}
-
 .animate-fadeIn {
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -85,29 +105,30 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 /* ---------- Interactive map (Leaflet + OpenStreetMap) ---------- */
 .pw-map .leaflet-container {
-  background: #0b1220;
+  background: var(--background);
   font-family: inherit;
 }
 
 /* Dark mode for standard OSM tiles: invert, then rotate hues back so water stays blue */
 .pw-dark-tiles .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.85) saturate(0.6);
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.85) saturate(0.4);
 }
 
 .pw-map .leaflet-control-attribution {
   /* Same inset and look as the map legend, so the two bars line up at the bottom */
-  margin: 0 20px 8px 0;
+  margin: 0 12px 8px 0;
   padding: 2px 8px;
   border-radius: 8px;
-  border: 1px solid rgb(30 41 59);
-  background: rgba(15, 23, 42, 0.85);
-  color: #94a3b8;
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--card) 90%, transparent);
+  color: var(--muted-foreground);
   font-size: 10px;
 }
 .pw-map .leaflet-control-attribution a {
-  color: #7dd3fc;
+  color: var(--foreground);
 }
 
 /* City name labels */
@@ -116,13 +137,13 @@
   border: none;
   box-shadow: none;
   padding: 0;
-  color: #e2e8f0;
+  color: var(--foreground);
   font-size: 10px;
   font-weight: 500;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 4px rgba(0, 0, 0, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 3px rgba(0, 0, 0, 0.8);
 }
 .pw-map:not(.pw-dark-tiles) .leaflet-tooltip.pw-city-label {
-  color: #0f172a;
+  color: #1c1917;
   text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 2px #fff;
 }
 .pw-map .leaflet-tooltip.pw-city-label::before {
@@ -130,7 +151,7 @@
 }
 .pw-map .leaflet-tooltip.pw-tier-1 {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 .pw-map .leaflet-tooltip.pw-tier-2 {
   font-size: 11px;
@@ -139,36 +160,36 @@
 .pw-map .leaflet-tooltip.pw-origin-label,
 .pw-map .leaflet-tooltip.pw-dest-label {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 .pw-map .leaflet-tooltip.pw-origin-label {
-  color: #6ee7b7 !important;
+  color: var(--start) !important;
 }
 .pw-map .leaflet-tooltip.pw-dest-label {
-  color: #a5b4fc !important;
+  color: var(--finish) !important;
 }
 
-/* Start / finish pins */
+/* Start / finish pins, with a pulsing ring */
 .pw-endpoint {
   position: relative;
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   border-radius: 9999px;
   background: var(--pw-color);
-  border: 3px solid #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--background);
+  box-shadow: 0 0 0 1px var(--pw-color), 0 2px 6px rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-weight: 800;
-  font-size: 13px;
+  color: var(--background);
+  font-weight: 700;
+  font-size: 12px;
   cursor: pointer;
 }
 .pw-endpoint::after {
   content: '';
   position: absolute;
-  inset: -8px;
+  inset: -7px;
   border-radius: 9999px;
   background: var(--pw-color);
   opacity: 0.35;
@@ -183,9 +204,9 @@
   }
 }
 
-/* Route */
+/* Dashes moving along the route, from start to destination */
 .pw-route-dash {
-  stroke-dasharray: 8 8;
+  stroke-dasharray: 6 10;
   animation: pwDashFlow 1.2s linear infinite;
 }
 @keyframes pwDashFlow {
@@ -193,20 +214,44 @@
     stroke-dashoffset: -32;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-endpoint::after,
+  .pw-route-dash {
+    animation: none;
+  }
+}
+
+/* Distance in the middle of the route */
 .pw-distance-badge {
   transform: translate(-50%, -50%);
   white-space: nowrap;
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 9999px;
-  background: #090d16;
-  border: 1.5px solid #38bdf8;
-  color: #fff;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--foreground);
   font-size: 12px;
-  font-weight: 700;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
+/* Start/finish chooser popup */
+.pw-map .leaflet-popup-content-wrapper,
+.pw-map .leaflet-popup-tip {
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+.pw-map .leaflet-popup-content-wrapper {
+  border-radius: 10px;
+}
+.pw-map a.leaflet-popup-close-button {
+  color: var(--muted-foreground);
+}
 .pw-choice-popup .leaflet-popup-content {
   margin: 10px 12px;
 }

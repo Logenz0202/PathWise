@@ -4,8 +4,8 @@
 // The list of cities and towns is generated from OpenStreetMap (ODbL) by scripts/build_cities.mjs.
 // Sorted by population, biggest first.
 import type { LatLngBoundsExpression, LatLngTuple } from 'leaflet'
-import CITY_DATA from '../data/cities.json'
-import type { City } from '../types'
+import CITY_DATA from '@/data/cities.json'
+import type { City } from '@/types'
 
 export const CITIES = CITY_DATA as City[]
 

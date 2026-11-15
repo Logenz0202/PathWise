@@ -23,7 +23,7 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 |---|---|
 | Backend | Python 3.15, **FastAPI**, SQLAlchemy 2, Pydantic 2, httpx |
 | Database | **SQLite** (a single file, created on first start; no database server) |
-| Frontend | **React 19** + **TypeScript** (strict), **React Router 8**, Vite 8, Tailwind CSS 4, **Leaflet** / react-leaflet, lucide-react icons |
+| Frontend | **React 19** + **TypeScript** (strict), **React Router 8**, Vite 8, Tailwind CSS 4, **shadcn/ui** (Radix), **Leaflet** / react-leaflet, lucide-react icons |
 | AI | LLM via the **OpenRouter** API, free model by default (`google/gemma-4-26b-a4b-it:free`; configurable with `OPENROUTER_MODEL`) |
 | Data | City list generated from **GeoNames**; map tiles from **OpenStreetMap** |
 | Infrastructure | Docker Compose (database + API + frontend) |
@@ -43,7 +43,7 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 - **Money stored once** – all amounts are calculated and stored in EUR; the frontend converts to PLN for display and input at a fixed rate.
 - **Typed frontend** – strict TypeScript with the API shapes in one file (`src/types.ts`, mirroring the backend schemas). Translation keys are a type too: a misspelt key or a missing Polish translation fails the build.
 - **Real URLs for every page** – React Router: `/` (map planner), `/history`, `/cars` and `/comparisons/:id`. A result opened from History or the planner reuses the data already loaded; opened directly, it is fetched from the API (with a "not found" page for unknown ids). The planner keeps the chosen route while you visit other pages.
-- **Reusable UI components** – repeated patterns (error alerts, popovers, choice chips, inputs, badges, empty and loading states) live once in `components/ui/`; feature folders compose them. Long Tailwind class lists are split by concern with a tiny `cx()` helper instead of one long string.
+- **A small, consistent UI** – dark only, warm neutral greys and one accent: orange for primary actions, with green and violet for the trip's start (A) and finish (B) (orange, green and violet are the three secondary colours, evenly spaced on the colour wheel). The palette lives in CSS variables in `styles/index.css`; buttons on orange use near-black text for contrast. Building blocks come from **shadcn/ui** (copied into `components/ui/`, built on Radix, so popovers, toggles and focus handling are accessible); feature folders compose them, and `components/common/` holds the app's own shared pieces (delete confirmation, empty and loading states). Class lists are merged with `cn()`.
 - **Lightweight i18n** – a small React context (no extra library) for translations plus language-aware number, money and duration formatting.
 
 ## 🔌 REST API
@@ -83,7 +83,8 @@ PathWise/
 ├── frontend/               # React + TypeScript + Vite + Tailwind CSS + Leaflet
 │   └── src/
 │       ├── components/
-│       │   ├── ui/         # Reusable building blocks: Alert, Badge, Panel, Popover, TextInput, …
+│       │   ├── ui/         # shadcn/ui building blocks: Button, Input, Popover, Toggle Group, Card, …
+│       │   ├── common/     # App-wide pieces: delete confirmation, empty and loading states
 │       │   ├── layout/     # Header (navigation) and footer
 │       │   ├── planner/    # Sidebar form: city inputs, distance card, car picker, preferences
 │       │   ├── map/        # Leaflet map, its controls and overlays
@@ -93,9 +94,10 @@ PathWise/
 │       ├── data/           # Generated city list (cities.json)
 │       ├── hooks/          # API client and car presets hooks
 │       ├── i18n/           # English / Polish text and formatting
+│       ├── lib/            # cn() class-name helper (shadcn)
 │       ├── pages/          # One per route: planner, history, comparison result, My Cars
 │       ├── styles/
-│       ├── utils/          # Cities, currency, fuel profiles, transport modes, cx() class helper
+│       ├── utils/          # Cities, currency, fuel profiles, transport modes
 │       └── types.ts        # API data types
 ├── .github/workflows/      # CI: lint + tests, frontend build, Docker build
 ├── scripts/                # build_cities.mjs (regenerates the city lists)
@@ -170,7 +172,7 @@ ruff check .
   - replacing the hand-drawn SVG map with Leaflet + OpenStreetMap and writing the GeoNames city-list generator;
   - car presets as a full CRUD resource (API + My Cars page), electric-car units and emissions, EUR/PLN and English/Polish support;
   - redesigning the Eco-Coach after testing its answers: structured JSON output validated before saving, a priority and free-text note from the traveller, door-to-door times, and moving the decision logic into the backend (size-based scoring) so the LLM explains a grounded choice instead of guessing — including fixing cases where it contradicted the numbers or gave tips for the wrong option;
-  - UX changes (layout fitting laptop screens, history cards, header behaviour) based on my feedback;
+  - UX changes (layout fitting laptop screens, history cards, header behaviour) based on my feedback, and a UI overhaul on shadcn/ui: I chose the direction (dark, one orange accent, no gradients or marketing copy) and reviewed it screen by screen;
   - real road routes from OSRM with a database cache and a realistic per-mode travel-time model (I chose free, keyless services and checked the numbers against real trips);
   - moving the frontend to TypeScript and React Router, and upgrading the stack to current versions (Python 3.15, Node 26, React 19, Vite 8, Tailwind CSS 4), and moving from PostgreSQL to SQLite so the project runs without a database server;
   - code review and cleanup: removing dead code, de-duplicating components, fixing bugs found along the way (e.g. a startup error in the config, broken API paths, an invalid AI model id) and REST status codes.

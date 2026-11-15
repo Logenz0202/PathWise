@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApi } from './useApi'
-import { findCityByName } from '../utils/geoData'
-import type { RouteInfo } from '../types'
+import { findCityByName } from '@/utils/geoData'
+import type { RouteInfo } from '@/types'
 
 // Wait this long after the last change (e.g. typing a distance) before asking the API
 const DEBOUNCE_MS = 300

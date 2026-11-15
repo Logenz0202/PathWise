@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useApi } from './useApi'
-import { FUEL_PROFILES, FUEL_TYPES } from '../utils/vehicle'
-import type { AverageCar, CarProfile, CarProfileInput, SelectableCar } from '../types'
+import { FUEL_PROFILES, FUEL_TYPES } from '@/utils/vehicle'
+import type { AverageCar, CarProfile, CarProfileInput, SelectableCar } from '@/types'
 
 const SELECTED_KEY = 'pathwise.selectedCar'
 

@@ -1,6 +1,6 @@
 import { Car, Train, Bus, type LucideIcon } from 'lucide-react'
-import type { TranslationKey } from '../i18n/translations'
-import type { TransportMode } from '../types'
+import type { TranslationKey } from '@/i18n/translations'
+import type { TransportMode } from '@/types'
 
 interface ModeInfo {
   labelKey: TranslationKey

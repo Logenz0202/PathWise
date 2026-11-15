@@ -1,12 +1,14 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Loader2 } from 'lucide-react'
-import Alert from '../ui/Alert'
-import ChoiceButton from '../ui/ChoiceButton'
-import TextInput from '../ui/TextInput'
-import { FUEL_PROFILES, FUEL_TYPES, fuelProfile } from '../../utils/vehicle'
-import { useCurrency } from '../../utils/currency'
-import { useI18n } from '../../i18n/LanguageContext'
-import type { CarProfile, CarProfileInput, FuelType } from '../../types'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { FUEL_PROFILES, FUEL_TYPES, fuelProfile } from '@/utils/vehicle'
+import { useCurrency } from '@/utils/currency'
+import { useI18n } from '@/i18n/LanguageContext'
+import type { CarProfile, CarProfileInput, FuelType } from '@/types'
 
 interface CarFormProps {
   car?: CarProfile
@@ -22,9 +24,16 @@ interface FormState {
   price: string
 }
 
-// Small label above a form control
-function FieldLabel({ children }: { children: ReactNode }) {
-  return <span className="block text-xs font-semibold text-slate-600 mb-1">{children}</span>
+// Number input with its unit shown inside on the right
+function UnitInput({ unit, ...props }: React.ComponentProps<typeof Input> & { unit: string }) {
+  return (
+    <div className="relative">
+      <Input type="number" required className="pr-20 tabular-nums" {...props} />
+      <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-muted-foreground">
+        {unit}
+      </span>
+    </div>
+  )
 }
 
 // Create/edit form for a car preset. The price is typed in the display currency and sent in EUR.
@@ -78,10 +87,11 @@ export default function CarForm({ car, onSave, onCancel }: CarFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card p-4 space-y-4 border-primary-200">
-      <label className="block">
-        <FieldLabel>{t('cars.name')}</FieldLabel>
-        <TextInput
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-primary/40 bg-card p-4">
+      <div className="space-y-1.5">
+        <Label htmlFor="car-name">{t('cars.name')}</Label>
+        <Input
+          id="car-name"
           autoFocus
           required
           maxLength={60}
@@ -89,69 +99,72 @@ export default function CarForm({ car, onSave, onCancel }: CarFormProps) {
           onChange={(e) => set('name', e.target.value)}
           placeholder={t('cars.namePlaceholder')}
         />
-      </label>
+      </div>
 
-      <div>
-        <span className="block text-xs font-semibold text-slate-600 mb-1.5">{t('car.fuelType')}</span>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs">
+      <div className="space-y-1.5">
+        <Label>{t('car.fuelType')}</Label>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          spacing={0}
+          value={form.fuelType}
+          // Radix sends '' when the active item is clicked again; keep the current value then
+          onValueChange={(value) => value && selectFuelType(value as FuelType)}
+          aria-label={t('car.fuelType')}
+          className="grid w-full grid-cols-2 sm:grid-cols-4"
+        >
           {FUEL_TYPES.map((value) => {
             const { labelKey, icon: Icon } = FUEL_PROFILES[value]
             return (
-              <ChoiceButton
-                key={value}
-                aria-pressed={form.fuelType === value}
-                selected={form.fuelType === value}
-                onClick={() => selectFuelType(value)}
-                className="p-2 flex items-center gap-2"
-              >
-                <Icon className="w-3.5 h-3.5 text-slate-500" />
-                <span>{t(labelKey)}</span>
-              </ChoiceButton>
+              <ToggleGroupItem key={value} value={value} className="data-[state=on]:text-primary">
+                <Icon />
+                {t(labelKey)}
+              </ToggleGroupItem>
             )
           })}
-        </div>
+        </ToggleGroup>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <label className="block">
-          <FieldLabel>{t('car.consumption')}</FieldLabel>
-          <TextInput
-            type="number"
-            required
+        <div className="space-y-1.5">
+          <Label htmlFor="car-consumption">{t('car.consumption')}</Label>
+          <UnitInput
+            id="car-consumption"
             min="0.1"
             max="100"
             step="0.1"
             value={form.consumption}
             onChange={(e) => set('consumption', e.target.value)}
-            suffix={`${profile.unit}/100km`}
-            className="pr-24"
+            unit={`${profile.unit}/100km`}
           />
-        </label>
-        <label className="block">
-          <FieldLabel>{t(profile.priceKey)}</FieldLabel>
-          <TextInput
-            type="number"
-            required
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="car-price">{t(profile.priceKey)}</Label>
+          <UnitInput
+            id="car-price"
             min="0.01"
             step="0.01"
             value={form.price}
             onChange={(e) => set('price', e.target.value)}
-            suffix={`${symbol}/${profile.unit}`}
-            className="pr-16"
+            unit={`${symbol}/${profile.unit}`}
           />
-        </label>
+        </div>
       </div>
 
-      {error && <Alert size="sm">{error}</Alert>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="btn bg-slate-100 text-slate-700 hover:bg-slate-200">
+        <Button type="button" variant="outline" onClick={onCancel}>
           {t('cars.cancel')}
-        </button>
-        <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
-          {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+        </Button>
+        <Button type="submit" disabled={saving}>
+          {saving && <Loader2 className="animate-spin" />}
           {t('cars.save')}
-        </button>
+        </Button>
       </div>
     </form>
   )

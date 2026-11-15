@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react'
 import { Clock } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import HistoryCard from './HistoryCard'
-import Alert from '../ui/Alert'
-import EmptyState from '../ui/EmptyState'
-import LoadingState from '../ui/LoadingState'
-import { useApi } from '../../hooks/useApi'
-import { useI18n } from '../../i18n/LanguageContext'
-import type { ComparisonSummary } from '../../types'
+import EmptyState from '@/components/common/EmptyState'
+import LoadingState from '@/components/common/LoadingState'
+import { useApi } from '@/hooks/useApi'
+import { useI18n } from '@/i18n/LanguageContext'
+import type { ComparisonSummary } from '@/types'
 
 interface HistoryListProps {
   onViewComparison: (id: number) => void
   onStartComparing: () => void
+  // Called after a comparison is deleted, so cached copies elsewhere can be dropped
+  onDeleted: (id: number) => void
 }
 
 // Saved comparisons, newest first; each can be opened or deleted
-export default function HistoryList({ onViewComparison, onStartComparing }: HistoryListProps) {
+export default function HistoryList({ onViewComparison, onStartComparing, onDeleted }: HistoryListProps) {
   const { get, delete: del, loading, error } = useApi()
   const { t } = useI18n()
   const [comparisons, setComparisons] = useState<ComparisonSummary[]>([])
@@ -29,6 +32,7 @@ export default function HistoryList({ onViewComparison, onStartComparing }: Hist
   const handleDelete = async (id: number) => {
     await del(`/comparisons/${id}`)
     setComparisons((prev) => prev.filter((c) => c.id !== id))
+    onDeleted(id)
   }
 
   if (loading && comparisons.length === 0) return <LoadingState message={t('history.loading')} />
@@ -39,25 +43,25 @@ export default function HistoryList({ onViewComparison, onStartComparing }: Hist
         icon={Clock}
         title={t('history.empty')}
         hint={t('history.emptyHint')}
-        action={
-          <button type="button" onClick={onStartComparing} className="btn-primary">
-            {t('history.compareNow')}
-          </button>
-        }
+        action={<Button onClick={onStartComparing}>{t('history.compareNow')}</Button>}
       />
     )
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-2xl font-bold text-gray-900">{t('history.title')}</h2>
-        <span className="text-sm text-gray-500">{t('history.saved', { count: comparisons.length })}</span>
+    <div className="space-y-4">
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-xl font-semibold">{t('history.title')}</h1>
+        <span className="text-sm text-muted-foreground">{t('history.saved', { count: comparisons.length })}</span>
       </div>
 
-      {error && <Alert className="mb-5">{error}</Alert>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {comparisons.map((comparison) => (
           <HistoryCard
             key={comparison.id}

@@ -1,7 +1,7 @@
 import { Fuel, Gauge, Zap, type LucideIcon } from 'lucide-react'
-import type { I18n } from '../i18n/LanguageContext'
-import type { TranslationKey } from '../i18n/translations'
-import type { CarProfileInput, Comparison, ComparisonSummary, Currency, FuelType, SelectableCar } from '../types'
+import type { I18n } from '@/i18n/LanguageContext'
+import type { TranslationKey } from '@/i18n/translations'
+import type { CarProfileInput, Comparison, ComparisonSummary, Currency, FuelType, SelectableCar } from '@/types'
 
 interface FuelProfile {
   labelKey: TranslationKey

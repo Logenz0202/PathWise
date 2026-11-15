@@ -1,15 +1,15 @@
 import { Link } from 'react-router'
 import { ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import CarDetails from './CarDetails'
 import EcoCoachCard from './EcoCoachCard'
 import ModeCard from './ModeCard'
 import { bestByMetric } from './metrics'
-import { useI18n } from '../../i18n/LanguageContext'
-import { useCurrency } from '../../utils/currency'
-import { MODE_KEYS } from '../../utils/transport'
-import { comparisonCarLabel } from '../../utils/vehicle'
-import type { Comparison } from '../../types'
-import { cx } from '../../utils/cx'
+import { useI18n } from '@/i18n/LanguageContext'
+import { useCurrency } from '@/utils/currency'
+import { MODE_KEYS } from '@/utils/transport'
+import { comparisonCarLabel } from '@/utils/vehicle'
+import type { Comparison } from '@/types'
 
 interface ComparisonResultsProps {
   comparison: Comparison
@@ -29,45 +29,35 @@ export default function ComparisonResults({ comparison, backTo, backLabel }: Com
   const best = bestByMetric(options)
 
   // CO₂ saved by the greenest option compared with the most polluting one
-  const co2Values = options.map((o) => o.data.co2_kg || 0)
-  const maxCo2 = Math.max(...co2Values)
-  const co2Saved = maxCo2 > 0 ? maxCo2 - Math.min(...co2Values) : 0
+  const co2Values = options.map((o) => o.data.co2_kg)
+  const co2Saved = Math.max(...co2Values) - Math.min(...co2Values)
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fadeIn pb-12">
-      <div
-        className={cx(
-          'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4',
-          'bg-white p-6 rounded-2xl shadow-xs border border-slate-200'
-        )}
-      >
-        <Link
-          to={backTo}
-          className={cx(
-            'px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium',
-            'bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all'
-          )}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>{backLabel}</span>
-        </Link>
-
-        <div className="text-center sm:text-right">
-          <div className="flex items-center gap-2 justify-center sm:justify-end">
-            <span className="text-2xl font-black text-slate-900 tracking-tight">{comparison.origin}</span>
-            <span className="text-slate-400 font-bold">→</span>
-            <span className="text-2xl font-black text-primary-600 tracking-tight">{comparison.destination}</span>
-          </div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
-            {t('results.roadDistance')}{' '}
-            <span className="text-slate-800 font-bold">{formatNumber(comparison.distance_km, 0)} km</span>
+    <div className="mx-auto max-w-6xl animate-fadeIn space-y-6 pb-12">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button asChild variant="ghost" size="sm" className="self-start text-muted-foreground">
+          <Link to={backTo}>
+            <ArrowLeft />
+            {backLabel}
+          </Link>
+        </Button>
+        <div className="sm:text-right">
+          <h1 className="flex items-center gap-2 text-xl font-semibold sm:justify-end">
+            <span className="size-2.5 rounded-full bg-start" />
+            {comparison.origin}
+            <span className="text-muted-foreground">→</span>
+            <span className="size-2.5 rounded-full bg-finish" />
+            {comparison.destination}
+          </h1>
+          <p className="text-sm text-muted-foreground tabular-nums">
+            {formatNumber(comparison.distance_km, 0)} km {t('results.roadDistance')}
           </p>
         </div>
       </div>
 
       <EcoCoachCard comparison={comparison} co2Saved={co2Saved} />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {options.map(({ mode, data }) => (
           <ModeCard
             key={mode}
@@ -76,7 +66,6 @@ export default function ComparisonResults({ comparison, backTo, backLabel }: Com
             best={best}
             aiPick={comparison.ai_advice.recommended === mode}
             carLabel={mode === 'car' ? carLabel : undefined}
-            maxCo2={maxCo2}
             fmt={fmt}
           />
         ))}
@@ -85,7 +74,7 @@ export default function ComparisonResults({ comparison, backTo, backLabel }: Com
       <CarDetails comparison={comparison} carLabel={carLabel} />
 
       {/* Where the distances and times came from */}
-      <p className="px-1 text-xs text-slate-400">
+      <p className="text-xs text-muted-foreground">
         {t(comparison.route_source === 'osrm' ? 'results.sourceOsrm' : 'results.sourceEstimate')}
       </p>
     </div>

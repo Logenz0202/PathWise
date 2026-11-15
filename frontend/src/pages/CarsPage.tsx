@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Car, Plus } from 'lucide-react'
-import CarForm from '../components/cars/CarForm'
-import CarRow from '../components/cars/CarRow'
-import Alert from '../components/ui/Alert'
-import EmptyState from '../components/ui/EmptyState'
-import Panel from '../components/ui/Panel'
-import type { CarsState } from '../hooks/useCars'
-import { describeCar } from '../utils/vehicle'
-import { useCurrency } from '../utils/currency'
-import { useI18n } from '../i18n/LanguageContext'
+import CarForm from '@/components/cars/CarForm'
+import CarRow from '@/components/cars/CarRow'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import EmptyState from '@/components/common/EmptyState'
+import type { CarsState } from '@/hooks/useCars'
+import { describeCar } from '@/utils/vehicle'
+import { useCurrency } from '@/utils/currency'
+import { useI18n } from '@/i18n/LanguageContext'
 
 // My Cars (/cars): create, edit and delete the car presets the planner can use
 export default function CarsPage({ cars: carsState }: { cars: CarsState }) {
@@ -19,21 +19,27 @@ export default function CarsPage({ cars: carsState }: { cars: CarsState }) {
   const fmt = { t, formatNumber, formatMoney }
 
   return (
-    <Panel>
-      <div className="flex items-center justify-between gap-4 mb-1">
-        <h2 className="text-2xl font-bold text-gray-900">{t('cars.title')}</h2>
+    <div className="mx-auto max-w-3xl space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold">{t('cars.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('cars.intro')}</p>
+        </div>
         {editing !== 'new' && (
-          <button type="button" onClick={() => setEditing('new')} className="btn-primary flex items-center gap-1.5">
-            <Plus className="w-4 h-4" />
+          <Button type="button" onClick={() => setEditing('new')}>
+            <Plus />
             {t('cars.add')}
-          </button>
+          </Button>
         )}
       </div>
-      <p className="text-sm text-gray-500 mb-5">{t('cars.intro')}</p>
 
-      {error && <Alert className="mb-4">{error}</Alert>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {editing === 'new' && (
           <CarForm
             onCancel={() => setEditing(null)}
@@ -72,6 +78,6 @@ export default function CarsPage({ cars: carsState }: { cars: CarsState }) {
           )
         )}
       </div>
-    </Panel>
+    </div>
   )
 }

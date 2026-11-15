@@ -1,9 +1,10 @@
 import { Pencil, Trash2 } from 'lucide-react'
-import ConfirmButton from '../ui/ConfirmButton'
-import IconButton from '../ui/IconButton'
-import { useI18n } from '../../i18n/LanguageContext'
-import { fuelProfile } from '../../utils/vehicle'
-import type { CarProfile } from '../../types'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import ConfirmButton from '@/components/common/ConfirmButton'
+import { useI18n } from '@/i18n/LanguageContext'
+import { fuelProfile } from '@/utils/vehicle'
+import type { CarProfile } from '@/types'
 
 interface CarRowProps {
   car: CarProfile
@@ -20,23 +21,29 @@ export default function CarRow({ car, summary, inUse, onEdit, onDelete }: CarRow
   const { t } = useI18n()
   const Icon = fuelProfile(car.fuel_type).icon
   return (
-    <div className="card p-4 flex items-center gap-4">
-      <div className="p-2.5 rounded-xl bg-primary-50 text-primary-600 shrink-0">
-        <Icon className="w-5 h-5" />
-      </div>
+    <div className="flex items-center gap-4 rounded-xl border bg-card p-4">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+        <Icon className="size-4" />
+      </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-gray-900 truncate">{car.name}</h3>
-          {inUse && (
-            <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 rounded-full">
-              {t('cars.inUse')}
-            </span>
-          )}
+          <h3 className="truncate font-medium">{car.name}</h3>
+          {inUse && <Badge variant="outline">{t('cars.inUse')}</Badge>}
         </div>
-        <p className="text-xs text-gray-500 truncate">{summary}</p>
+        <p className="truncate text-xs text-muted-foreground tabular-nums">{summary}</p>
       </div>
-      <div className="flex items-center gap-1 shrink-0">
-        <IconButton icon={Pencil} title={t('cars.edit')} label={t('cars.editLabel', { name: car.name })} onClick={onEdit} />
+      <div className="flex shrink-0 items-center gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={onEdit}
+          title={t('cars.edit')}
+          aria-label={t('cars.editLabel', { name: car.name })}
+          className="text-muted-foreground"
+        >
+          <Pencil />
+        </Button>
         <ConfirmButton
           icon={Trash2}
           title={t('cars.delete')}

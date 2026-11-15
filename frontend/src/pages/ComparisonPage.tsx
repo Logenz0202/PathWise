@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { ArrowLeft } from 'lucide-react'
-import ComparisonResults from '../components/results/ComparisonResults'
-import LoadingState from '../components/ui/LoadingState'
-import Panel from '../components/ui/Panel'
-import { ApiError, useApi } from '../hooks/useApi'
-import { useI18n } from '../i18n/LanguageContext'
-import type { Comparison } from '../types'
+import ComparisonResults from '@/components/results/ComparisonResults'
+import LoadingState from '@/components/common/LoadingState'
+import { Button } from '@/components/ui/button'
+import { ApiError, useApi } from '@/hooks/useApi'
+import { useI18n } from '@/i18n/LanguageContext'
+import type { Comparison } from '@/types'
 
 export const comparisonPath = (id: number) => `/comparisons/${id}`
 
@@ -57,18 +57,20 @@ export default function ComparisonPage({ cached, onLoaded }: ComparisonPageProps
 
   const problem = !validId || failure === 'notFound' ? t('results.notFound') : failure === 'error' ? error : null
   return (
-    <Panel className="p-8 text-center">
+    <div className="mx-auto max-w-3xl">
       {problem ? (
-        <>
-          <p className="text-slate-700 mb-5">{problem}</p>
-          <Link to={backTo} className="btn-primary inline-flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            {backLabel}
-          </Link>
-        </>
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed px-6 py-12 text-center">
+          <p className="text-muted-foreground">{problem}</p>
+          <Button asChild variant="outline">
+            <Link to={backTo}>
+              <ArrowLeft />
+              {backLabel}
+            </Link>
+          </Button>
+        </div>
       ) : (
         <LoadingState message={t('results.loading')} />
       )}
-    </Panel>
+    </div>
   )
 }

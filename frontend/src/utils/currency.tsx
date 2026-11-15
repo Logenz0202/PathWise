@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import type { Currency, Language } from '../types'
-import { useI18n } from '../i18n/LanguageContext'
+import type { Currency, Language } from '@/types'
+import { useI18n } from '@/i18n/LanguageContext'
 
 // All prices are calculated and stored in EUR; this only changes how they're shown and entered.
 // Fixed rate for the MVP; keep in sync with EUR_TO_PLN_RATE in backend/app/core/config.py.

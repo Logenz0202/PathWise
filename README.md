@@ -10,7 +10,7 @@
 2. **Multi-criteria comparison** – car vs. train vs. bus across door-to-door travel time (train and bus include getting to the station and waiting, so the car can win short trips), cost and CO₂, with the fastest, cheapest and greenest option highlighted.
 3. **My Cars (car presets)** – save your own cars (name, fuel type, consumption, fuel/electricity price) and pick one in the planner; results and History show which car each comparison used. Petrol, diesel, LPG and electric are supported, with the right units (L/100km or kWh/100km). Without a selected car, PathWise uses an average car.
 4. **AI Eco-Coach** – tell it what matters most (balanced, fastest, cheapest or greenest) and, optionally, anything else in your own words ("lots of luggage", "I want to work on the way"). Together with the computed numbers and the chosen car this goes to an LLM (via OpenRouter), which returns structured advice: the recommended mode (marked "AI pick" on its card), a one-line headline, the reasoning and up to two practical tips. If no API key is configured or the reply is unusable, a rule-based coach returns advice in the same format, so the app always works.
-5. **History** – every comparison is saved; reopen or delete past trips.
+5. **History** – every comparison is saved; reopen or delete past trips. Each result has its own address (e.g. `/comparisons/42`), so it can be bookmarked, shared or reloaded.
 6. **English / Polish and EUR / PLN** – switch language and currency from the header. Numbers and the AI's answer follow the chosen language.
 
 ### ✨ Creative twist
@@ -22,7 +22,7 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 |---|---|
 | Backend | Python 3.15, **FastAPI**, SQLAlchemy 2, Pydantic 2, httpx |
 | Database | **PostgreSQL 18** (Docker) |
-| Frontend | **React 19**, Vite 8, Tailwind CSS 4, **Leaflet** / react-leaflet, lucide-react icons |
+| Frontend | **React 19** + **TypeScript** (strict), **React Router 8**, Vite 8, Tailwind CSS 4, **Leaflet** / react-leaflet, lucide-react icons |
 | AI | LLM via the **OpenRouter** API (model configurable, default `google/gemma-4-26b-a4b-it`) |
 | Data | City list generated from **GeoNames**; map tiles from **OpenStreetMap** |
 | Infrastructure | Docker Compose (database + API + frontend) |
@@ -38,6 +38,9 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 - **Comparisons keep their own copy of the car** – the preset's name and specs are copied into each saved comparison, so History stays accurate after a car is renamed or deleted.
 - **Small schema upgrades without a migration tool** – `db/migrations.py` adds columns introduced after a database was created (e.g. `comparisons.car_name`, `priority`, `notes`), safely on every startup.
 - **Money stored once** – all amounts are calculated and stored in EUR; the frontend converts to PLN for display and input at a fixed rate.
+- **Typed frontend** – strict TypeScript with the API shapes in one file (`src/types.ts`, mirroring the backend schemas). Translation keys are a type too: a misspelt key or a missing Polish translation fails the build.
+- **Real URLs for every page** – React Router: `/` (map planner), `/history`, `/cars` and `/comparisons/:id`. A result opened from History or the planner reuses the data already loaded; opened directly, it is fetched from the API (with a "not found" page for unknown ids). The planner keeps the chosen route while you visit other pages.
+- **Reusable UI components** – repeated patterns (error alerts, popovers, choice chips, inputs, badges, empty and loading states) live once in `components/ui/`; feature folders compose them. Long Tailwind class lists are split by concern with a tiny `cx()` helper instead of one long string.
 - **Lightweight i18n** – a small React context (no extra library) for translations plus language-aware number, money and duration formatting.
 
 ## 🔌 REST API
@@ -74,14 +77,23 @@ PathWise/
 │   │   ├── schemas/        # Request / response validation
 │   │   └── services/       # Calculator, AI Eco-Coach, geo lookups
 │   └── tests/              # pytest: unit tests for services, API tests on PostgreSQL
-├── frontend/               # React + Vite + Tailwind CSS + Leaflet
+├── frontend/               # React + TypeScript + Vite + Tailwind CSS + Leaflet
 │   └── src/
-│       ├── components/     # Map, sidebar, car picker, My Cars, results, history
+│       ├── components/
+│       │   ├── ui/         # Reusable building blocks: Alert, Badge, Panel, Popover, TextInput, …
+│       │   ├── layout/     # Header (navigation) and footer
+│       │   ├── planner/    # Sidebar form: city inputs, distance card, car picker, preferences
+│       │   ├── map/        # Leaflet map, its controls and overlays
+│       │   ├── results/    # Comparison result: Eco-Coach card, per-mode cards, car details
+│       │   ├── history/    # History list and cards
+│       │   └── cars/       # Car preset form and row
 │       ├── data/           # Generated city list (cities.json)
 │       ├── hooks/          # API client and car presets hooks
 │       ├── i18n/           # English / Polish text and formatting
+│       ├── pages/          # One per route: planner, history, comparison result, My Cars
 │       ├── styles/
-│       └── utils/          # Cities, currency, fuel profiles, transport modes
+│       ├── utils/          # Cities, currency, fuel profiles, transport modes, cx() class helper
+│       └── types.ts        # API data types
 ├── .github/workflows/      # CI: lint + tests, frontend build, Docker build
 ├── scripts/                # build_cities.mjs (regenerates the city lists)
 ├── docker-compose.yml      # Database + API + frontend
@@ -151,7 +163,7 @@ ruff check .
 
 Set `TEST_DATABASE_URL` to use another PostgreSQL server.
 
-**GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every push to `main` and every pull request: ruff + pytest with coverage against a PostgreSQL service container, a production build of the frontend, and a build of the Docker images.
+**GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every push to `main` and every pull request: ruff + pytest with coverage against a PostgreSQL service container, a type check and production build of the frontend, and a build of the Docker images.
 
 ## 🤖 How AI Tools Were Used
 
@@ -161,6 +173,7 @@ Set `TEST_DATABASE_URL` to use another PostgreSQL server.
   - car presets as a full CRUD resource (API + My Cars page), electric-car units and emissions, EUR/PLN and English/Polish support;
   - redesigning the Eco-Coach after testing its answers: structured JSON output validated before saving, a priority and free-text note from the traveller, door-to-door times, and moving the decision logic into the backend (size-based scoring) so the LLM explains a grounded choice instead of guessing — including fixing cases where it contradicted the numbers or gave tips for the wrong option;
   - UX changes (layout fitting laptop screens, history cards, header behaviour) based on my feedback;
+  - moving the frontend to TypeScript and React Router, and upgrading the stack to current versions (PostgreSQL 18, Python 3.15, Node 26, React 19, Vite 8, Tailwind CSS 4);
   - code review and cleanup: removing dead code, de-duplicating components, fixing bugs found along the way (e.g. a startup error in the config, broken API paths, an invalid AI model id) and REST status codes.
 - I decided on the features and UX, reviewed the changes and tested the app in the browser on Docker after each step.
 

@@ -1,46 +1,27 @@
 """Shared test setup.
 
-Unit tests (calculator, eco_coach, geo, routing parsing) need nothing external. API tests run against a real
-PostgreSQL database, `pathwise_test` on the docker-compose `db` service by default, so the
-developer's own `pathwise` data is never touched. Override it with TEST_DATABASE_URL (CI does).
+Unit tests (calculator, eco_coach, geo, routing parsing) need nothing external. API and caching
+tests use a throwaway SQLite file in a temporary folder, so the developer's own pathwise.db is
+never touched.
 """
 
 import os
+import tempfile
+from pathlib import Path
 
 import pytest
-from sqlalchemy import create_engine, text
-from sqlalchemy.engine import make_url
-
-TEST_DATABASE_URL = os.environ.get(
-    "TEST_DATABASE_URL", "postgresql://postgres:postgres@localhost:5433/pathwise_test"
-)
 
 # Must be set before anything imports app.core.config, which reads the environment once
-os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+TEST_DB = Path(tempfile.mkdtemp(prefix="pathwise-tests-")) / "test.db"
+os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB.as_posix()}"
 # Tests use the deterministic offline Eco-Coach; the LLM path is tested with a mocked transport
 os.environ["OPENROUTER_API_KEY"] = ""
 # No network: routes are estimated; the OSRM client is tested with a mocked transport
 os.environ["OSRM_URL"] = ""
 
 
-def _ensure_test_database(url: str) -> None:
-    """Create the test database if it doesn't exist yet (refusing anything not named *test*)."""
-    parsed = make_url(url)
-    if "test" not in parsed.database:
-        raise RuntimeError(f"Refusing to run API tests against non-test database {parsed.database!r}")
-    admin = create_engine(parsed.set(database="postgres"), isolation_level="AUTOCOMMIT")
-    try:
-        with admin.connect() as conn:
-            exists = conn.scalar(text("SELECT 1 FROM pg_database WHERE datname = :name"), {"name": parsed.database})
-            if not exists:
-                conn.execute(text(f'CREATE DATABASE "{parsed.database}"'))
-    finally:
-        admin.dispose()
-
-
 @pytest.fixture(scope="session")
 def api_app():
-    _ensure_test_database(TEST_DATABASE_URL)
     from app.main import app  # creates the tables on import
 
     return app
@@ -48,8 +29,12 @@ def api_app():
 
 @pytest.fixture
 def db_engine(api_app):
-    from app.db.session import engine
+    """The app's database engine, with every table emptied."""
+    from app.db.session import Base, engine
 
+    with engine.begin() as conn:
+        for table in reversed(Base.metadata.sorted_tables):
+            conn.execute(table.delete())
     return engine
 
 
@@ -58,7 +43,5 @@ def client(api_app, db_engine):
     """A TestClient on an empty database."""
     from fastapi.testclient import TestClient
 
-    with db_engine.begin() as conn:
-        conn.execute(text("TRUNCATE comparisons, car_profiles, road_routes RESTART IDENTITY"))
     with TestClient(api_app) as test_client:
         yield test_client

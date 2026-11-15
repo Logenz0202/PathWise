@@ -76,7 +76,6 @@ export default function HistoryCard({ comparison, onOpen, onDelete, deleting }: 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {MODE_KEYS.map((mode) => {
           const option = comparison[mode]
-          if (!option) return null
           const { icon: Icon, labelKey, soft, text } = MODES[mode]
           return (
             <div

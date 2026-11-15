@@ -22,7 +22,7 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 | Layer | Technologies |
 |---|---|
 | Backend | Python 3.15, **FastAPI**, SQLAlchemy 2, Pydantic 2, httpx |
-| Database | **PostgreSQL 18** (Docker) |
+| Database | **SQLite** (a single file, created on first start; no database server) |
 | Frontend | **React 19** + **TypeScript** (strict), **React Router 8**, Vite 8, Tailwind CSS 4, **Leaflet** / react-leaflet, lucide-react icons |
 | AI | LLM via the **OpenRouter** API (model configurable, default `google/gemma-4-26b-a4b-it`) |
 | Data | City list generated from **GeoNames**; map tiles from **OpenStreetMap** |
@@ -32,14 +32,14 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 ### Interesting solutions
 - **Layered backend** – `api/` (REST routes) → `services/` (routing, calculator, AI coach, geo lookups) → `models/` + `schemas/` (SQLAlchemy tables, Pydantic validation).
 - **Structured, grounded AI output** – the backend decides *what the numbers say* and the LLM explains it. For "balanced", each option gets a score from how many times worse it is than the best one on time, cost and CO₂ (log ratios, so 3× the price outweighs 3% more CO₂ instead of "winning a category"); a specific priority points to that category's winner. The prompt gives the model pre-formatted numbers, the exact differences ("+€60.63 vs car, 3.4x") and the best match; it must follow it unless the traveller's note gives a concrete reason, and must state the key trade-off with its size. The reply is a JSON object (`recommended`, `headline`, `reason`, `tips`) validated with Pydantic; temperature 0 keeps the same inputs giving the same pick.
-- **Routing that is free, polite and offline-safe** – `services/routing.py` asks the public OSRM server for the route once per city pair (with an identifying User-Agent and at most one request per second, as its usage policy asks) and stores it in PostgreSQL; the reverse trip reuses it. The line is simplified (Douglas–Peucker) to ~300 points for the map. If OSRM is down or `OSRM_URL` is empty, a straight-line estimate is used and the UI says so.
+- **Routing that is free, polite and offline-safe** – `services/routing.py` asks the public OSRM server for the route once per city pair (with an identifying User-Agent and at most one request per second, as its usage policy asks) and stores it in the database; the reverse trip reuses it. The line is simplified (Douglas–Peucker) to ~300 points for the map. If OSRM is down or `OSRM_URL` is empty, a straight-line estimate is used and the UI says so.
 - **A transparent time model** – every rule in `services/calculator.py` is a named constant: traffic allowance and rest breaks for the car; for the bus, each road segment from OSRM capped at the 100 km/h coach limit, stops and the 45-minute break EU rules require after 4.5 h; for the train (no free rail router covers the region), a rail distance from the straight line, average long-distance train speeds per country, slower regional trains on short trips, and extra time at borders (passport control outside Schengen, changing trains where standard gauge meets the broad gauge of Lithuania, Belarus and Ukraine). Train times are labelled as estimates.
 - **Free-text context, safely** – the traveller's note is passed to the model as quoted context with an instruction to ignore any instructions inside it (a simple prompt-injection guard), and is limited to 200 characters.
 - **AI with a safe fallback** – any OpenRouter problem (no key, network, quota, invalid reply) is logged and replaced by rule-based advice in the same structure and the user's language.
 - **5,700 markers without lag** – cities are drawn on a Leaflet canvas layer and filtered by zoom level and viewport, so only relevant markers are rendered.
 - **Reproducible place data** – `scripts/build_cities.mjs` downloads every city and town from OpenStreetMap (Overpass API, no key) and builds the list: Latin-script names (English for Ukraine and Belarus), Polish and local names as search aliases, zoom tiers by population, duplicates removed. Names used by the earlier GeoNames-based list are kept as aliases (`scripts/legacy_names.json`), so saved trips like *Hannover* or *Grodno* still resolve.
 - **Comparisons keep their own copy of the car** – the preset's name and specs are copied into each saved comparison, so History stays accurate after a car is renamed or deleted.
-- **Small schema upgrades without a migration tool** – `db/migrations.py` adds columns introduced after a database was created (e.g. `comparisons.car_name`, `priority`, `notes`), safely on every startup.
+- **Zero-setup database** – SQLite, as the brief suggests: the API creates `backend/pathwise.db` and its tables on first start. SQLite keeps no time zone, so timestamps are written in UTC and sent to the browser marked as UTC (`...Z`); otherwise "5 min ago" in History would be off by the user's UTC offset.
 - **Money stored once** – all amounts are calculated and stored in EUR; the frontend converts to PLN for display and input at a fixed rate.
 - **Typed frontend** – strict TypeScript with the API shapes in one file (`src/types.ts`, mirroring the backend schemas). Translation keys are a type too: a misspelt key or a missing Polish translation fails the build.
 - **Real URLs for every page** – React Router: `/` (map planner), `/history`, `/cars` and `/comparisons/:id`. A result opened from History or the planner reuses the data already loaded; opened directly, it is fetched from the API (with a "not found" page for unknown ids). The planner keeps the chosen route while you visit other pages.
@@ -75,11 +75,11 @@ PathWise/
 │   │   ├── api/            # REST routes: cars, comparisons, geo
 │   │   ├── core/           # Settings (environment variables)
 │   │   ├── data/           # Generated city list (cities.json)
-│   │   ├── db/             # Database session
+│   │   ├── db/             # Database session (SQLite)
 │   │   ├── models/         # SQLAlchemy models
 │   │   ├── schemas/        # Request / response validation
 │   │   └── services/       # Calculator, AI Eco-Coach, geo lookups
-│   └── tests/              # pytest: unit tests for services, API tests on PostgreSQL
+│   └── tests/              # pytest: unit tests for services, API tests on a temporary SQLite database
 ├── frontend/               # React + TypeScript + Vite + Tailwind CSS + Leaflet
 │   └── src/
 │       ├── components/
@@ -105,10 +105,11 @@ PathWise/
 
 ## 🚀 Running Locally
 
-### Optional: AI key
-Copy `.env.example` to `.env` in the project root and set `OPENROUTER_API_KEY` (get one at https://openrouter.ai/keys). Without a key the app works the same, using the offline recommendation.
+There are two ways to run PathWise: **with Docker** (one command) or **without Docker** (API and frontend in two terminals). Neither needs a database server: the data lives in a SQLite file that is created on first start.
 
-### Option A – Docker (one command)
+**Optional – AI key:** copy `.env.example` to `.env` in the project root and set `OPENROUTER_API_KEY` (get one at https://openrouter.ai/keys). Both ways read it from there. Without a key the app works the same, using the offline recommendation.
+
+### With Docker
 Requirements: **Docker** with Docker Compose.
 
 ```bash
@@ -117,26 +118,23 @@ docker compose up --build
 
 - Frontend: http://localhost:5173
 - API: http://localhost:8001 (Swagger: http://localhost:8001/docs)
-- PostgreSQL: `localhost:5433` (user / password `postgres`, database `pathwise`)
 
-### Option B – API and frontend without Docker
-Requirements: **Python 3.11+** (Docker and CI use 3.15), **Node.js 22.12+** (Docker and CI use 26 LTS) and a PostgreSQL database. The simplest way to get the database is to start only that container:
+The database file is kept in a Docker volume, so it survives restarts and rebuilds (`docker compose down -v` deletes it).
 
-```bash
-docker compose up -d db
-```
+### Without Docker
+Requirements: **Python 3.11+** and **Node.js 22.12+** (Docker and CI use Python 3.15 and Node 26 LTS).
 
 **1. API** (terminal 1):
 
 ```bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
+.venvScriptsactivate          # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8001
 ```
 
-By default the API connects to `postgresql://postgres:postgres@localhost:5433/pathwise` (the `db` container). To use another PostgreSQL server, set the `DATABASE_URL` environment variable. To enable the AI coach, set `OPENROUTER_API_KEY`.
+The database is created as `backend/pathwise.db` on first start (delete the file to start over).
 
 **2. Frontend** (terminal 2):
 
@@ -152,21 +150,18 @@ Open http://localhost:5173. The Vite dev server forwards `/api` requests to the 
 
 The backend has ~100 pytest tests (≈99% coverage):
 - **Unit tests** for the time model (car breaks, coach speed cap and driver breaks, train speeds per country, border and gauge changes), the OSRM client (parsing, line simplification, caching, reverse trips and the fallback when OSRM fails, with a mocked HTTP transport), distance lookup and Eco-Coach: the decision logic (priorities and the size-based balanced score), formatting, parsing and validating the model's reply, the offline fallback, and the LLM call itself with a mocked HTTP transport (valid advice is used; HTTP errors, network errors and invalid replies fall back to offline advice). No network access or API key needed.
-- **API tests** for every endpoint, run with FastAPI's `TestClient` against a real PostgreSQL database: CRUD flows, `201`/`204`/`404`/`422` responses, history order and paging, the legacy plain-text recommendation and the CORS rules.
+- **API tests** for every endpoint, run with FastAPI's `TestClient` against a real (temporary) SQLite database: CRUD flows, `201`/`204`/`404`/`422` responses, history order and paging, UTC timestamps and the CORS rules.
 
-API tests use a separate `pathwise_test` database (created automatically on the `db` container), so your own data is never touched:
+Tests use a throwaway database in a temporary folder, so your own `pathwise.db` is never touched, and need no network or API key:
 
 ```bash
-docker compose up -d db
 cd backend
 pip install -r requirements-dev.txt
 pytest --cov
 ruff check .
 ```
 
-Set `TEST_DATABASE_URL` to use another PostgreSQL server.
-
-**GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every push to `main` and every pull request: ruff + pytest with coverage against a PostgreSQL service container, a type check and production build of the frontend, and a build of the Docker images.
+**GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every push to `main` and every pull request: ruff + pytest with coverage, a type check and production build of the frontend, and a build of the Docker images.
 
 ## 🤖 How AI Tools Were Used
 
@@ -177,7 +172,7 @@ Set `TEST_DATABASE_URL` to use another PostgreSQL server.
   - redesigning the Eco-Coach after testing its answers: structured JSON output validated before saving, a priority and free-text note from the traveller, door-to-door times, and moving the decision logic into the backend (size-based scoring) so the LLM explains a grounded choice instead of guessing — including fixing cases where it contradicted the numbers or gave tips for the wrong option;
   - UX changes (layout fitting laptop screens, history cards, header behaviour) based on my feedback;
   - real road routes from OSRM with a database cache and a realistic per-mode travel-time model (I chose free, keyless services and checked the numbers against real trips);
-  - moving the frontend to TypeScript and React Router, and upgrading the stack to current versions (PostgreSQL 18, Python 3.15, Node 26, React 19, Vite 8, Tailwind CSS 4);
+  - moving the frontend to TypeScript and React Router, and upgrading the stack to current versions (Python 3.15, Node 26, React 19, Vite 8, Tailwind CSS 4), and moving from PostgreSQL to SQLite so the project runs without a database server;
   - code review and cleanup: removing dead code, de-duplicating components, fixing bugs found along the way (e.g. a startup error in the config, broken API paths, an invalid AI model id) and REST status codes.
 - I decided on the features and UX, reviewed the changes and tested the app in the browser on Docker after each step.
 

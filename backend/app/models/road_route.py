@@ -1,6 +1,6 @@
 from sqlalchemy import Column, DateTime, Float, Integer, String, Text, UniqueConstraint
-from sqlalchemy.sql import func
 
+from app.core.time import utc_now
 from app.db.session import Base
 
 
@@ -22,4 +22,4 @@ class RoadRouteCache(Base):
     bus_drive_minutes = Column(Float, nullable=False)
     # JSON list of [lat, lng] points
     geometry = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)

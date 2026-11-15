@@ -1,9 +1,9 @@
-from datetime import datetime
 from typing import List, Literal, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.comparison import TransportMode
+from app.schemas.common import UtcDatetime
 
 Priority = Literal["balanced", "fastest", "cheapest", "greenest"]
 
@@ -59,12 +59,12 @@ class ComparisonListResponse(BaseModel):
     origin: str
     destination: str
     distance_km: float
-    car: Optional[TransportOption]
-    train: Optional[TransportOption]
-    bus: Optional[TransportOption]
+    car: TransportOption
+    train: TransportOption
+    bus: TransportOption
     car_name: Optional[str]
     car_fuel_type: Optional[str]
-    created_at: datetime
+    created_at: UtcDatetime
 
 
 class ComparisonResponse(ComparisonListResponse):
@@ -72,13 +72,11 @@ class ComparisonResponse(ComparisonListResponse):
 
     car_consumption_l_per_100km: Optional[float]
     car_fuel_price_per_liter: Optional[float]
-    priority: Optional[str]
+    priority: Priority
     notes: Optional[str]
-    # "osrm" (real road route) or "estimate"; empty for comparisons saved before routing
-    route_source: Optional[str]
-    ai_advice: Optional[Advice]
-    # Plain-text recommendation saved by earlier versions (before structured advice)
-    ai_text: Optional[str]
+    # "osrm" (real road route) or "estimate"
+    route_source: Literal["osrm", "estimate"]
+    ai_advice: Advice
 
 
 class RouteResponse(BaseModel):

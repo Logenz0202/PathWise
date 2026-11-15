@@ -2,7 +2,6 @@ import asyncio
 
 import httpx
 import pytest
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.services import routing
@@ -73,14 +72,12 @@ def test_scaled_route_stretches_times_with_the_distance():
     assert (route.distance_km, route.car_drive_minutes, route.bus_drive_minutes) == (150, 90, 105)
 
 
-# --- Fetching, caching and fallback (HTTP mocked, PostgreSQL test database) -------------------
+# --- Fetching, caching and fallback (HTTP mocked, SQLite test database) -----------------------
 
 
 @pytest.fixture
 def empty_cache(db_engine):
-    with db_engine.begin() as conn:
-        conn.execute(text("TRUNCATE road_routes RESTART IDENTITY"))
-    return db_engine
+    return db_engine  # db_engine starts with every table empty
 
 
 @pytest.fixture

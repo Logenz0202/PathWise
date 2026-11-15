@@ -3,19 +3,6 @@ import { useI18n } from '../../i18n/LanguageContext'
 import { cx } from '../../utils/cx'
 import type { Comparison } from '../../types'
 
-// Older plain-text recommendations mark emphasis as **bold**; render it instead of the asterisks
-function renderBold(line: string) {
-  return line.split('**').map((part, i) =>
-    i % 2 === 1 ? (
-      <strong key={i} className="font-semibold text-white">
-        {part}
-      </strong>
-    ) : (
-      part
-    )
-  )
-}
-
 interface EcoCoachCardProps {
   comparison: Comparison
   // kg of CO₂ saved by the greenest option compared with the most polluting one
@@ -26,7 +13,6 @@ interface EcoCoachCardProps {
 export default function EcoCoachCard({ comparison, co2Saved }: EcoCoachCardProps) {
   const { t, formatNumber } = useI18n()
   const advice = comparison.ai_advice
-  if (!advice && !comparison.ai_text) return null
 
   return (
     <div
@@ -58,34 +44,21 @@ export default function EcoCoachCard({ comparison, co2Saved }: EcoCoachCardProps
             )}
           </div>
 
-          {advice ? (
-            <>
-              <p className="text-lg font-bold text-white leading-snug">{advice.headline}</p>
-              <p className="text-slate-200 text-sm leading-relaxed">{advice.reason}</p>
-              {comparison.priority && (
-                <p className="text-xs text-emerald-300/80">
-                  {t('results.basedOn', { priority: t(`prefs.${comparison.priority}`) })}
-                  {comparison.notes && ` · ${t('results.noteQuote', { note: comparison.notes })}`}
-                </p>
-              )}
-              {advice.tips.length > 0 && (
-                <ul className="pt-1 space-y-1">
-                  {advice.tips.map((tip, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm text-emerald-100/90">
-                      <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" />
-                      <span>{tip}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          ) : (
-            // Comparisons saved before structured advice: plain text with **bold** markers
-            <div className="text-slate-200 text-sm leading-relaxed space-y-1">
-              {(comparison.ai_text ?? '').split('\n').map((line, idx) => (
-                <p key={idx}>{renderBold(line)}</p>
+          <p className="text-lg font-bold text-white leading-snug">{advice.headline}</p>
+          <p className="text-slate-200 text-sm leading-relaxed">{advice.reason}</p>
+          <p className="text-xs text-emerald-300/80">
+            {t('results.basedOn', { priority: t(`prefs.${comparison.priority}`) })}
+            {comparison.notes && ` · ${t('results.noteQuote', { note: comparison.notes })}`}
+          </p>
+          {advice.tips.length > 0 && (
+            <ul className="pt-1 space-y-1">
+              {advice.tips.map((tip, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-sm text-emerald-100/90">
+                  <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" />
+                  <span>{tip}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </div>
       </div>

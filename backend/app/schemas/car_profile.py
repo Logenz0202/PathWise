@@ -1,7 +1,8 @@
-from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.schemas.common import UtcDatetime
 
 FuelType = Literal["petrol", "diesel", "lpg", "electric"]
 
@@ -25,4 +26,4 @@ class CarProfileResponse(CarProfileBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    created_at: datetime
+    created_at: UtcDatetime

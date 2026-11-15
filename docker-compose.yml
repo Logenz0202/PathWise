@@ -1,31 +1,12 @@
 services:
-  db:
-    image: postgres:18-alpine
-    container_name: pathwise-db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pathwise
-    volumes:
-      # Postgres 18+ keeps data in a version-named folder under /var/lib/postgresql, so mount the parent.
-      # New volume name: data from the old Postgres 15 volume (postgres_data) can't be opened by 18
-      - postgres18_data:/var/lib/postgresql
-    ports:
-      # Host port 5433 so it doesn't clash with a Postgres already installed on the machine
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: pathwise-backend
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/pathwise
+      # SQLite file in a named volume, so it survives rebuilds and stays out of the bind-mounted code
+      DATABASE_URL: sqlite:////data/pathwise.db
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENROUTER_BASE_URL: https://openrouter.ai/api/v1
       OPENROUTER_MODEL: google/gemma-4-26b-a4b-it
@@ -37,9 +18,7 @@ services:
       - "8001:8000"
     volumes:
       - ./backend:/app
-    depends_on:
-      db:
-        condition: service_healthy
+      - data:/data
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
@@ -62,4 +41,4 @@ services:
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
 
 volumes:
-  postgres18_data:
+  data:

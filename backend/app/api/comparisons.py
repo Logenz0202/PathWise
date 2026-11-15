@@ -18,6 +18,13 @@ from app.services.routing import get_road_route
 router = APIRouter(prefix="/api/comparisons", tags=["comparisons"])
 
 
+def get_comparison_or_404(comparison_id: int, db: Session) -> Comparison:
+    comparison = db.get(Comparison, comparison_id)
+    if not comparison:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comparison not found")
+    return comparison
+
+
 @router.post("/", response_model=ComparisonResponse, status_code=status.HTTP_201_CREATED)
 async def create_comparison(
     request: ComparisonRequest,
@@ -110,10 +117,7 @@ def get_comparison(
     db: Session = Depends(get_db)
 ):
     """Get a specific comparison by ID."""
-    comparison = db.query(Comparison).filter(Comparison.id == comparison_id).first()
-    if not comparison:
-        raise HTTPException(status_code=404, detail="Comparison not found")
-    return comparison
+    return get_comparison_or_404(comparison_id, db)
 
 
 @router.delete("/{comparison_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -122,9 +126,7 @@ def delete_comparison(
     db: Session = Depends(get_db)
 ):
     """Delete a comparison."""
-    comparison = db.query(Comparison).filter(Comparison.id == comparison_id).first()
-    if not comparison:
-        raise HTTPException(status_code=404, detail="Comparison not found")
+    comparison = get_comparison_or_404(comparison_id, db)
 
     db.delete(comparison)
     db.commit()

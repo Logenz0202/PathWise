@@ -31,9 +31,9 @@ export interface ComparisonSummary {
   origin: string
   destination: string
   distance_km: number
-  car: TransportOption | null
-  train: TransportOption | null
-  bus: TransportOption | null
+  car: TransportOption
+  train: TransportOption
+  bus: TransportOption
   car_name: string | null
   car_fuel_type: FuelType | null
   created_at: string
@@ -44,13 +44,11 @@ export interface Comparison extends ComparisonSummary {
   // For electric cars these are kWh/100km and EUR/kWh (the names are historical)
   car_consumption_l_per_100km: number | null
   car_fuel_price_per_liter: number | null
-  priority: Priority | null
+  priority: Priority
   notes: string | null
-  // Where the road distance and times came from; null for comparisons saved before routing
-  route_source: RouteSource | null
-  ai_advice: Advice | null
-  // Plain-text recommendation saved by earlier versions (before structured advice)
-  ai_text: string | null
+  // Where the road distance and times came from
+  route_source: RouteSource
+  ai_advice: Advice
 }
 
 // Road route between two cities with door-to-door times for an average car (GET /api/geo/route)

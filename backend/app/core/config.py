@@ -1,13 +1,19 @@
+from pathlib import Path
 from typing import List, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
+    # .env in the project root (as the README says), or in backend/ when running from there
+    model_config = SettingsConfigDict(
+        env_file=(BACKEND_DIR.parent / ".env", BACKEND_DIR / ".env"), case_sensitive=True, extra="ignore"
+    )
 
-    # Database: localhost for running the API directly; docker-compose overrides it with the `db` service
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5433/pathwise"
+    # SQLite file in the backend folder, created on first start. docker-compose keeps it in a volume instead
+    DATABASE_URL: str = f"sqlite:///{(BACKEND_DIR / 'pathwise.db').as_posix()}"
 
     # OpenRouter API
     OPENROUTER_API_KEY: Optional[str] = None

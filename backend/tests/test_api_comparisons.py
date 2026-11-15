@@ -1,7 +1,6 @@
-import pytest
-from sqlalchemy.orm import Session
+from datetime import datetime, timedelta, timezone
 
-from app.models.comparison import Comparison
+import pytest
 
 TRIP = {"origin": "Warsaw", "destination": "Krakow"}
 
@@ -22,7 +21,6 @@ def test_create_comparison_calculates_distance_options_and_advice(client):
     assert body["priority"] == "balanced"
     assert body["ai_advice"]["recommended"] in {"car", "train", "bus"}
     assert body["ai_advice"]["headline"]
-    assert body["ai_text"] is None
 
 
 def test_create_comparison_with_car_profile_and_preferences(client):
@@ -79,17 +77,22 @@ def test_missing_comparison_returns_404(client):
     assert client.delete("/api/comparisons/999").status_code == 404
 
 
-def test_old_plain_text_recommendation_is_returned_as_text(client, db_engine):
-    # Rows saved before the advice became structured JSON hold plain text
-    with Session(db_engine) as session:
-        row = Comparison(origin="A", destination="B", distance_km=10, ai_recommendation="Take the train.")
-        session.add(row)
-        session.commit()
-        row_id = row.id
+def test_timestamps_are_sent_as_utc(client):
+    # SQLite stores datetimes without a time zone; the API must still mark them as UTC, or browsers
+    # would read them as local time ("5 min ago" would be off by the UTC offset)
+    created = client.post("/api/comparisons/", json=TRIP).json()
+    car = {"name": "Golf", "fuel_type": "petrol", "consumption_per_100km": 6, "energy_price_eur": 1.7}
+    timestamps = [
+        created["created_at"],  # just saved
+        client.get(f"/api/comparisons/{created['id']}").json()["created_at"],  # read back from SQLite
+        client.get("/api/comparisons/").json()[0]["created_at"],
+        client.post("/api/cars/", json=car).json()["created_at"],
+    ]
 
-    body = client.get(f"/api/comparisons/{row_id}").json()
-    assert body["ai_advice"] is None
-    assert body["ai_text"] == "Take the train."
+    for value in timestamps:
+        parsed = datetime.fromisoformat(value)
+        assert parsed.utcoffset() == timedelta(0)
+        assert abs(parsed - datetime.now(timezone.utc)) < timedelta(minutes=1)
 
 
 @pytest.mark.parametrize(

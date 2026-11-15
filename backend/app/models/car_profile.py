@@ -1,6 +1,6 @@
 from sqlalchemy import Column, DateTime, Float, Integer, String
-from sqlalchemy.sql import func
 
+from app.core.time import utc_now
 from app.db.session import Base
 
 
@@ -18,4 +18,4 @@ class CarProfile(Base):
     fuel_type = Column(String, nullable=False)
     consumption_per_100km = Column(Float, nullable=False)
     energy_price_eur = Column(Float, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)

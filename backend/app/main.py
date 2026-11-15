@@ -3,13 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import cars, comparisons, geo
 from app.core.config import settings
-from app.db.migrations import upgrade_schema
 from app.db.session import Base, engine
 from app.models import car_profile, comparison, road_route  # noqa: F401  (registers the tables on Base)
 
-# Create missing tables, then add any columns introduced since an existing database was created
+# Create the tables on first start (the SQLite file itself is created by the first connection)
 Base.metadata.create_all(bind=engine)
-upgrade_schema(engine)
 
 app = FastAPI(
     title=settings.APP_NAME,

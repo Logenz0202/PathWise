@@ -25,10 +25,7 @@ export default function ComparisonResults({ comparison, backTo, backLabel }: Com
   const fmt = { formatMoney, formatNumber, formatDuration }
   const carLabel = comparisonCarLabel(comparison, t)
 
-  const options = MODE_KEYS.flatMap((mode) => {
-    const data = comparison[mode]
-    return data ? [{ mode, data }] : []
-  })
+  const options = MODE_KEYS.map((mode) => ({ mode, data: comparison[mode] }))
   const best = bestByMetric(options)
 
   // CO₂ saved by the greenest option compared with the most polluting one
@@ -77,7 +74,7 @@ export default function ComparisonResults({ comparison, backTo, backLabel }: Com
             mode={mode}
             option={data}
             best={best}
-            aiPick={comparison.ai_advice?.recommended === mode}
+            aiPick={comparison.ai_advice.recommended === mode}
             carLabel={mode === 'car' ? carLabel : undefined}
             maxCo2={maxCo2}
             fmt={fmt}
@@ -87,12 +84,10 @@ export default function ComparisonResults({ comparison, backTo, backLabel }: Com
 
       <CarDetails comparison={comparison} carLabel={carLabel} />
 
-      {/* Where the distances and times came from (older comparisons don't say) */}
-      {comparison.route_source && (
-        <p className="px-1 text-xs text-slate-400">
-          {t(comparison.route_source === 'osrm' ? 'results.sourceOsrm' : 'results.sourceEstimate')}
-        </p>
-      )}
+      {/* Where the distances and times came from */}
+      <p className="px-1 text-xs text-slate-400">
+        {t(comparison.route_source === 'osrm' ? 'results.sourceOsrm' : 'results.sourceEstimate')}
+      </p>
     </div>
   )
 }

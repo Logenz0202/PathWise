@@ -20,8 +20,8 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 
 | Layer | Technologies |
 |---|---|
-| Backend | Python 3.11, **FastAPI**, SQLAlchemy 2, Pydantic 2, httpx |
-| Database | **PostgreSQL 15** (Docker) |
+| Backend | Python 3.15, **FastAPI**, SQLAlchemy 2, Pydantic 2, httpx |
+| Database | **PostgreSQL 18** (Docker) |
 | Frontend | **React 18**, Vite 5, Tailwind CSS 3, **Leaflet** / react-leaflet, lucide-react icons |
 | AI | LLM via the **OpenRouter** API (model configurable, default `google/gemma-4-26b-a4b-it`) |
 | Data | City list generated from **GeoNames**; map tiles from **OpenStreetMap** |
@@ -105,7 +105,7 @@ docker compose up --build
 - PostgreSQL: `localhost:5433` (user / password `postgres`, database `pathwise`)
 
 ### Option B – API and frontend without Docker
-Requirements: **Python 3.11+**, **Node.js 18+** and a PostgreSQL database. The simplest way to get the database is to start only that container:
+Requirements: **Python 3.11+** (Docker and CI use 3.15), **Node.js 20+** (Docker and CI use 26 LTS) and a PostgreSQL database. The simplest way to get the database is to start only that container:
 
 ```bash
 docker compose up -d db

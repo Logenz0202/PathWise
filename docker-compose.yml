@@ -1,13 +1,15 @@
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     container_name: pathwise-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: pathwise
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # Postgres 18+ keeps data in a version-named folder under /var/lib/postgresql, so mount the parent.
+      # New volume name: data from the old Postgres 15 volume (postgres_data) can't be opened by 18
+      - postgres18_data:/var/lib/postgresql
     ports:
       # Host port 5433 so it doesn't clash with a Postgres already installed on the machine
       - "5433:5432"
@@ -60,4 +62,4 @@ services:
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
 
 volumes:
-  postgres_data:
+  postgres18_data:

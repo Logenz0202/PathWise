@@ -126,7 +126,7 @@ function MapControls({ darkTiles, onToggleTiles }) {
   const btn =
     'p-2.5 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white rounded-xl border border-slate-700/80 shadow-lg transition-all backdrop-blur-md'
   return (
-    <div className="absolute bottom-8 right-5 z-[1000] flex flex-col gap-2">
+    <div className="absolute bottom-8 right-5 z-1000 flex flex-col gap-2">
       <button onClick={() => map.zoomIn()} title={t('map.zoomIn')} className={btn}>
         <ZoomIn className="w-4 h-4" />
       </button>
@@ -216,7 +216,7 @@ export default function InteractiveMap({
       }`}
     >
       {/* Top Banner & Quick Route Presets */}
-      <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+      <div className="absolute top-4 left-4 right-4 z-1000 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl text-xs shadow-lg text-slate-300">
           <Compass className="w-4 h-4 text-primary-400 animate-spin-slow" />
           <span>
@@ -234,14 +234,14 @@ export default function InteractiveMap({
         </div>
 
         <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 scrollbar-none">
-          <span className="text-[11px] font-semibold text-slate-200 uppercase tracking-wider hidden sm:inline mr-1 drop-shadow">
+          <span className="text-[11px] font-semibold text-slate-200 uppercase tracking-wider hidden sm:inline mr-1 drop-shadow-sm">
             {stableText('map.popular')}
           </span>
           {POPULAR_ROUTES.map((r, i) => (
             <button
               key={i}
               onClick={() => onQuickRouteSelect(r.origin, r.destination)}
-              className="px-2.5 py-1 text-xs bg-slate-900/85 hover:bg-primary-600/60 hover:border-primary-500/50 border border-slate-700/60 rounded-lg text-slate-200 hover:text-white transition-all whitespace-nowrap shadow-sm backdrop-blur-md"
+              className="px-2.5 py-1 text-xs bg-slate-900/85 hover:bg-primary-600/60 hover:border-primary-500/50 border border-slate-700/60 rounded-lg text-slate-200 hover:text-white transition-all whitespace-nowrap shadow-xs backdrop-blur-md"
             >
               {r.label}
             </button>
@@ -250,7 +250,7 @@ export default function InteractiveMap({
       </div>
 
       {/* Legend */}
-      <div className="absolute bottom-8 left-5 z-[1000] hidden sm:flex items-center gap-4 px-3 py-2 bg-slate-900/85 backdrop-blur-md border border-slate-800 rounded-xl text-xs text-slate-400 pointer-events-none">
+      <div className="absolute bottom-8 left-5 z-1000 hidden sm:flex items-center gap-4 px-3 py-2 bg-slate-900/85 backdrop-blur-md border border-slate-800 rounded-xl text-xs text-slate-400 pointer-events-none">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
           {stableText('map.start')}

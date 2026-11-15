@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MapPin, X } from 'lucide-react'
 import { searchCities } from '../utils/geoData'
 import { useI18n } from '../i18n/LanguageContext'
@@ -23,7 +23,7 @@ const ACCENTS = {
 
 // City search box with an autocomplete list. `value` is the selected city; typing only filters
 // suggestions, and leaving the field without picking one restores the selected city's name.
-const CityInput = forwardRef(function CityInput({ label, placeholder, value, onSelect, accent }, ref) {
+export default function CityInput({ label, placeholder, value, onSelect, accent, ref }) {
   const { t } = useI18n()
   const [query, setQuery] = useState(value || '')
   const [open, setOpen] = useState(false)
@@ -73,7 +73,7 @@ const CityInput = forwardRef(function CityInput({ label, placeholder, value, onS
           onFocus={() => setOpen(true)}
           onBlur={close}
           onKeyDown={onKeyDown}
-          className={`w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-all font-medium ${colors.focus}`}
+          className={`w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 transition-all font-medium ${colors.focus}`}
         />
         <MapPin className={`w-4 h-4 absolute left-3 pointer-events-none ${colors.pin}`} />
         {query && (
@@ -102,7 +102,7 @@ const CityInput = forwardRef(function CityInput({ label, placeholder, value, onS
               <div className="flex items-center gap-2">
                 <span className={`font-medium text-slate-800 ${colors.hoverText}`}>{city.name}</span>
                 {city.isCapital && (
-                  <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
+                  <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-sm">
                     {t('sidebar.capital')}
                   </span>
                 )}
@@ -114,6 +114,4 @@ const CityInput = forwardRef(function CityInput({ label, placeholder, value, onS
       )}
     </div>
   )
-})
-
-export default CityInput
+}

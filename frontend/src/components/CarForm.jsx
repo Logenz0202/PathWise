@@ -5,7 +5,7 @@ import { useCurrency } from '../utils/currency'
 import { useI18n } from '../i18n/LanguageContext'
 
 const inputClass =
-  'w-full py-2 px-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'
+  'w-full py-2 px-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'
 
 // Create/edit form for a car preset. The price is typed in the display currency and sent in EUR.
 export default function CarForm({ car, onSave, onCancel }) {
@@ -82,7 +82,7 @@ export default function CarForm({ car, onSave, onCancel }) {
               aria-pressed={form.fuelType === value}
               className={`p-2 rounded-lg border flex items-center gap-2 transition-all ${
                 form.fuelType === value
-                  ? 'border-primary-500 bg-primary-50/80 text-primary-900 font-bold shadow-sm'
+                  ? 'border-primary-500 bg-primary-50/80 text-primary-900 font-bold shadow-xs'
                   : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
               }`}
             >

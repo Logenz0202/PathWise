@@ -97,7 +97,7 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
                 handleView(comparison)
               }
             }}
-            className="card p-4 cursor-pointer group hover:border-primary-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            className="card p-4 cursor-pointer group hover:border-primary-300 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500"
           >
             <div className="flex items-center justify-between gap-4 mb-3">
               <div className="min-w-0">
@@ -119,7 +119,7 @@ export default function HistoryList({ onViewComparison, onStartComparing }) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <div className="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
                   onClick={(e) => handleDelete(e, comparison.id)}

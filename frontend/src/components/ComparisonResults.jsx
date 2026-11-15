@@ -73,7 +73,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fadeIn pb-12">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
         <button
           onClick={onBack}
           className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-all flex items-center gap-2 text-sm"
@@ -101,7 +101,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
 
       {/* AI Eco-Coach Recommendation */}
       {(advice || comparison.ai_text) && (
-        <div className="bg-gradient-to-br from-emerald-900 via-slate-900 to-slate-950 text-white p-6 rounded-2xl shadow-xl border border-emerald-500/30 relative overflow-hidden">
+        <div className="bg-linear-to-br from-emerald-900 via-slate-900 to-slate-950 text-white p-6 rounded-2xl shadow-xl border border-emerald-500/30 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex items-start gap-4">
@@ -166,7 +166,7 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
           return (
             <div
               key={key}
-              className={`relative bg-white rounded-2xl border-2 transition-all duration-300 shadow-sm hover:shadow-xl p-6 flex flex-col justify-between ${
+              className={`relative bg-white rounded-2xl border-2 transition-all duration-300 shadow-xs hover:shadow-xl p-6 flex flex-col justify-between ${
                 isGreenest
                   ? 'border-emerald-500 ring-2 ring-emerald-500/20'
                   : 'border-slate-200 hover:border-slate-300'
@@ -175,25 +175,25 @@ export default function ComparisonResults({ comparison, onBack, backLabel }) {
               {/* Badges */}
               <div className="flex flex-wrap gap-1.5 mb-4">
                 {advice?.recommended === key && (
-                  <span className="px-2.5 py-1 text-xs font-bold bg-violet-100 text-violet-900 rounded-lg flex items-center gap-1 shadow-sm">
+                  <span className="px-2.5 py-1 text-xs font-bold bg-violet-100 text-violet-900 rounded-lg flex items-center gap-1 shadow-xs">
                     <Sparkles className="w-3.5 h-3.5 text-violet-600" />
                     {t('results.aiPick')}
                   </span>
                 )}
                 {isFastest && (
-                  <span className="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-900 rounded-lg flex items-center gap-1 shadow-sm">
+                  <span className="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-900 rounded-lg flex items-center gap-1 shadow-xs">
                     <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />
                     {t('results.fastest')}
                   </span>
                 )}
                 {isCheapest && (
-                  <span className="px-2.5 py-1 text-xs font-bold bg-blue-100 text-blue-900 rounded-lg flex items-center gap-1 shadow-sm">
+                  <span className="px-2.5 py-1 text-xs font-bold bg-blue-100 text-blue-900 rounded-lg flex items-center gap-1 shadow-xs">
                     <Wallet className="w-3.5 h-3.5 text-blue-600" />
                     {t('results.cheapest')}
                   </span>
                 )}
                 {isGreenest && (
-                  <span className="px-2.5 py-1 text-xs font-bold bg-emerald-100 text-emerald-900 rounded-lg flex items-center gap-1 shadow-sm">
+                  <span className="px-2.5 py-1 text-xs font-bold bg-emerald-100 text-emerald-900 rounded-lg flex items-center gap-1 shadow-xs">
                     <Leaf className="w-3.5 h-3.5 text-emerald-600 fill-emerald-600" />
                     {t('results.greenest')}
                   </span>

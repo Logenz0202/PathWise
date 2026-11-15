@@ -61,7 +61,7 @@ export default function TripPreferences({ priority, onPriorityChange, notes, onN
                   onClick={() => onPriorityChange(value)}
                   className={`px-1 py-1.5 rounded-lg border flex flex-col items-center gap-0.5 transition-all ${
                     priority === value
-                      ? 'border-primary-500 bg-primary-50 text-primary-900 font-bold shadow-sm'
+                      ? 'border-primary-500 bg-primary-50 text-primary-900 font-bold shadow-xs'
                       : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                   }`}
                 >
@@ -86,7 +86,7 @@ export default function TripPreferences({ priority, onPriorityChange, notes, onN
                 }
               }}
               placeholder={t('prefs.notesPlaceholder')}
-              className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+              className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
             />
           </label>
         </div>

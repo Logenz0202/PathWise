@@ -6,7 +6,7 @@
 
 ## 💡 Features
 
-1. **Interactive map** – ~1,700 clickable cities (Poland and its neighbours) on OpenStreetMap. Smaller towns appear as you zoom in. Cities can also be searched by name, including Polish names such as *Praga* or *Kijów*.
+1. **Interactive map** – ~5,700 clickable cities and towns (Poland and its neighbours) from OpenStreetMap. Smaller towns appear as you zoom in. Places can also be searched by name, including Polish names such as *Praga*, *Lwów* or *Drezno*.
 2. **Real road routes** – the route between two cities follows the actual road network (OpenStreetMap data via the free OSRM routing service, no API key) and is drawn on the map, with the real road distance and a time preview per mode before you compare.
 3. **Multi-criteria comparison** – car vs. train vs. bus across door-to-door travel time, cost and CO₂, with the fastest, cheapest and greenest option highlighted. Times are realistic rather than "distance ÷ fixed speed": the car follows the speed limits of the roads it uses, the bus is capped at coach speed with stops and legal driver breaks, the train uses typical speeds per country with border and gauge changes, and train and bus include getting to the station.
 4. **My Cars (car presets)** – save your own cars (name, fuel type, consumption, fuel/electricity price) and pick one in the planner; results and History show which car each comparison used. Petrol, diesel, LPG and electric are supported, with the right units (L/100km or kWh/100km). Without a selected car, PathWise uses an average car.
@@ -36,8 +36,8 @@ The Eco-Coach turns raw numbers into a decision for *you*: the same trip can get
 - **A transparent time model** – every rule in `services/calculator.py` is a named constant: traffic allowance and rest breaks for the car; for the bus, each road segment from OSRM capped at the 100 km/h coach limit, stops and the 45-minute break EU rules require after 4.5 h; for the train (no free rail router covers the region), a rail distance from the straight line, average long-distance train speeds per country, slower regional trains on short trips, and extra time at borders (passport control outside Schengen, changing trains where standard gauge meets the broad gauge of Lithuania, Belarus and Ukraine). Train times are labelled as estimates.
 - **Free-text context, safely** – the traveller's note is passed to the model as quoted context with an instruction to ignore any instructions inside it (a simple prompt-injection guard), and is limited to 200 characters.
 - **AI with a safe fallback** – any OpenRouter problem (no key, network, quota, invalid reply) is logged and replaced by rule-based advice in the same structure and the user's language.
-- **1,700 markers without lag** – cities are drawn on a Leaflet canvas layer and filtered by zoom level and viewport, so only relevant markers are rendered.
-- **Reproducible city data** – `scripts/build_cities.mjs` builds the city list from the GeoNames dump: it removes districts listed as separate towns, ranks cities into zoom tiers and adds Polish names as search aliases.
+- **5,700 markers without lag** – cities are drawn on a Leaflet canvas layer and filtered by zoom level and viewport, so only relevant markers are rendered.
+- **Reproducible place data** – `scripts/build_cities.mjs` downloads every city and town from OpenStreetMap (Overpass API, no key) and builds the list: Latin-script names (English for Ukraine and Belarus), Polish and local names as search aliases, zoom tiers by population, duplicates removed. Names used by the earlier GeoNames-based list are kept as aliases (`scripts/legacy_names.json`), so saved trips like *Hannover* or *Grodno* still resolve.
 - **Comparisons keep their own copy of the car** – the preset's name and specs are copied into each saved comparison, so History stays accurate after a car is renamed or deleted.
 - **Small schema upgrades without a migration tool** – `db/migrations.py` adds columns introduced after a database was created (e.g. `comparisons.car_name`, `priority`, `notes`), safely on every startup.
 - **Money stored once** – all amounts are calculated and stored in EUR; the frontend converts to PLN for display and input at a fixed rate.
@@ -182,23 +182,23 @@ Set `TEST_DATABASE_URL` to use another PostgreSQL server.
 - I decided on the features and UX, reviewed the changes and tested the app in the browser on Docker after each step.
 
 ## 🗺️ Roadmap
-- [x] Interactive map on OpenStreetMap tiles (Leaflet) with ~1,700 clickable cities.
+- [x] Interactive map on OpenStreetMap tiles (Leaflet) with ~5,700 clickable cities and towns.
 - [x] English / Polish interface and EUR / PLN prices.
 - [x] Saved car presets.
 - [x] Real road routes (OSRM) and realistic per-mode travel times.
-- [ ] More places from OpenStreetMap (towns and villages, loaded from the API by map area instead of one bundled list).
+- [ ] Villages too, loaded from the API by map area instead of one bundled list.
 - [ ] Real train timetables instead of estimated train times.
 - [ ] Polish display names for cities in the Polish interface (search already accepts them).
 - [ ] Database module for gas stations and Electric Vehicle (EV) charging points along the route.
 - [ ] User accounts and favorite saved routes tracking.
 - [ ] Mobile app.
 
-## 🏙️ City Data & Attribution
+## 🏙️ Place Data & Attribution
 
-The map, the sidebar search and the backend share one city list (every place with 15k+ inhabitants in Poland, Germany, Czechia, Slovakia, Lithuania, Belarus and Ukraine): `frontend/src/data/cities.json` and `backend/app/data/cities.json`. It is generated from [GeoNames](https://www.geonames.org/) (CC-BY 4.0). Map tiles and road data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors; routes computed with [OSRM](https://project-osrm.org/).
+The map, the sidebar search and the backend share one list of places: every city and town (OpenStreetMap `place=city` / `place=town`) in Poland, Germany, Czechia, Slovakia, Lithuania, Belarus and Ukraine, in `frontend/src/data/cities.json` and `backend/app/data/cities.json`. Place data, map tiles and road data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL); routes computed with [OSRM](https://project-osrm.org/).
 
-To regenerate it, download and unzip [`cities15000.zip`](https://download.geonames.org/export/dump/cities15000.zip), then run:
+To regenerate it (downloads ~4 MB from the public Overpass API; the raw responses are cached in `../.osm-cache` so re-runs are offline):
 
 ```bash
-node scripts/build_cities.mjs path/to/cities15000.txt
+node scripts/build_cities.mjs
 ```

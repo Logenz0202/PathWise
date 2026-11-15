@@ -4,8 +4,8 @@ import unicodedata
 from pathlib import Path
 from typing import Optional
 
-# Cities with 15k+ population in Poland and its neighbours (Germany, Czechia, Slovakia, Ukraine,
-# Belarus, Lithuania). Generated from GeoNames by scripts/build_cities.mjs; sorted by population.
+# Cities and towns in Poland and its neighbours (Germany, Czechia, Slovakia, Ukraine, Belarus,
+# Lithuania). Generated from OpenStreetMap by scripts/build_cities.mjs; sorted by population.
 CITY_LIST = json.loads((Path(__file__).resolve().parent.parent / "data" / "cities.json").read_text(encoding="utf-8"))
 
 
@@ -37,7 +37,7 @@ KNOWN_ROAD_DISTANCES = {
     ("warsaw", "vilnius"): 460.0,
     ("warsaw", "minsk"): 550.0,
     ("warsaw", "brest"): 200.0,
-    ("warsaw", "grodno"): 270.0,
+    ("warsaw", "hrodna"): 270.0,
     ("warsaw", "lviv"): 395.0,
     ("warsaw", "kyiv"): 780.0,
     ("krakow", "prague"): 535.0,
@@ -60,8 +60,8 @@ KNOWN_ROAD_DISTANCES = {
     ("prague", "ostrava"): 370.0,
     ("bratislava", "kosice"): 400.0,
     ("minsk", "brest"): 350.0,
-    ("minsk", "grodno"): 290.0,
-    ("minsk", "gomel"): 310.0,
+    ("minsk", "hrodna"): 290.0,
+    ("minsk", "homel"): 310.0,
     ("vilnius", "kaunas"): 105.0,
     ("vilnius", "klaipeda"): 310.0,
     ("kyiv", "lviv"): 540.0,

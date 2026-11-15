@@ -1,20 +1,26 @@
-// Builds the city dataset used by the map, the sidebar autocomplete and the backend.
+// Builds the city/town dataset used by the map, the sidebar autocomplete and the backend.
 //
-// Source: GeoNames "cities15000" dump (all places with population >= 15,000), CC-BY 4.0.
-//   https://download.geonames.org/export/dump/cities15000.zip
+// Source: OpenStreetMap (ODbL), every node tagged place=city or place=town in Poland and its
+// neighbours, downloaded from the public Overpass API (no key needed).
 //
 // Usage:
-//   node scripts/build_cities.mjs path/to/cities15000.txt
+//   node scripts/build_cities.mjs [cacheDir]
+//
+// Raw Overpass responses are saved in cacheDir (default: .osm-cache next to the repo) and reused,
+// so re-running the script doesn't download everything again; delete the folder to refresh.
 //
 // Writes:
 //   frontend/src/data/cities.json
 //   backend/app/data/cities.json
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const CACHE_DIR = resolve(process.argv[2] || join(ROOT, '..', '.osm-cache'))
+const OVERPASS_URL = 'https://overpass-api.de/api/interpreter'
+const USER_AGENT = 'PathWise/1.0 (transport comparison MVP; data build script)'
 
 const COUNTRIES = {
   PL: 'Poland',
@@ -26,99 +32,15 @@ const COUNTRIES = {
   UA: 'Ukraine',
 }
 
-// GeoNames name -> display name (keeps names the app already used, and common English forms)
-const NAME_OVERRIDES = {
-  'Frankfurt am Main': 'Frankfurt',
-  'Köln': 'Cologne',
-  'Hrodna': 'Grodno',
-  "Homyel'": 'Gomel',
-  'Mahilyow': 'Mogilev',
-  'Zaporizhzhya': 'Zaporizhzhia',
-  'Babruysk': 'Bobruisk',
-  'Pilsen': 'Plzeň',
-}
+// Countries whose places are tagged in Cyrillic: shown by their English name
+const CYRILLIC_COUNTRIES = new Set(['BY', 'UA'])
 
-// City districts GeoNames lists as standalone towns that the radius rule below misses
-const EXCLUDE = new Set(['Fordon'])
+// Names an earlier version of the city list used (keyed by OSM node id), kept as search aliases so
+// saved trips and familiar spellings still resolve: Hannover, Grodno, Kiev, Monachium...
+const LEGACY_NAMES = JSON.parse(readFileSync(join(ROOT, 'scripts', 'legacy_names.json'), 'utf8'))
 
-// Extra search aliases: local spellings and the Polish names (exonyms) people are likely to type
-const ALIASES = {
-  // Poland
-  warsaw: ['Warszawa'],
-  // Germany
-  munich: ['München', 'Monachium'],
-  cologne: ['Köln', 'Kolonia'],
-  nuremberg: ['Nürnberg', 'Norymberga'],
-  frankfurt: ['Frankfurt am Main', 'Frankfurt nad Menem'],
-  'frankfurt-oder': ['Frankfurt nad Odrą'],
-  dresden: ['Drezno'],
-  leipzig: ['Lipsk'],
-  hannover: ['Hanower'],
-  bremen: ['Brema'],
-  cottbus: ['Chociebuż'],
-  // Czechia
-  prague: ['Praha', 'Praga'],
-  ostrava: ['Ostrawa'],
-  plzen: ['Pilsen', 'Pilzno'],
-  olomouc: ['Ołomuniec'],
-  'ceske-budejovice': ['Czeskie Budziejowice'],
-  // Slovakia
-  bratislava: ['Bratysława'],
-  kosice: ['Koszyce'],
-  zilina: ['Żylina'],
-  presov: ['Preszów'],
-  'banska-bystrica': ['Bańska Bystrzyca'],
-  // Lithuania
-  vilnius: ['Wilno'],
-  kaunas: ['Kowno'],
-  klaipeda: ['Kłajpeda'],
-  siauliai: ['Szawle'],
-  panevezys: ['Poniewież'],
-  // Belarus
-  minsk: ['Mińsk'],
-  brest: ['Brześć'],
-  grodno: ['Hrodna'],
-  gomel: ['Homel'],
-  vitebsk: ['Witebsk'],
-  mogilev: ['Mahilyow', 'Mohylew'],
-  bobruysk: ['Bobrujsk'],
-  baranovichi: ['Baranowicze'],
-  pinsk: ['Pińsk'],
-  maladziecna: ['Mołodeczno'],
-  // Ukraine
-  kyiv: ['Kiev', 'Kijów'],
-  kharkiv: ['Kharkov', 'Charków'],
-  odesa: ['Odessa'],
-  dnipro: ['Dniepr'],
-  zaporizhzhia: ['Zaporoże'],
-  lviv: ['Lwów', 'Lvov'],
-  'kryvyy-rih': ['Krzywy Róg'],
-  mykolayiv: ['Mikołajów'],
-  vinnytsya: ['Winnica'],
-  donetsk: ['Donieck'],
-  luhansk: ['Ługańsk'],
-  sevastopol: ['Sewastopol'],
-  simferopol: ['Symferopol'],
-  kherson: ['Chersoń'],
-  poltava: ['Połtawa'],
-  chernihiv: ['Czernihów'],
-  cherkasy: ['Czerkasy'],
-  zhytomyr: ['Żytomierz'],
-  rivne: ['Równe'],
-  'ivano-frankivsk': ['Iwano-Frankiwsk', 'Stanisławów'],
-  ternopil: ['Tarnopol'],
-  lutsk: ['Łuck'],
-  uzhhorod: ['Użhorod'],
-  chernivtsi: ['Czerniowce'],
-  khmelnytskyi: ['Chmielnicki'],
-  kropyvnytskyi: ['Kropywnycki'],
-  drohobych: ['Drohobycz'],
-  kovel: ['Kowel'],
-}
-
-// Drop a place if a bigger one lies within that city's radius (removes districts listed as
-// separate towns, e.g. Warsaw's Mokotów). Radius grows with population: 4 km up to 15 km.
-const mergeRadiusKm = (pop) => Math.min(15, Math.max(4, Math.sqrt(pop) / 100))
+// Two places closer than this are the same place mapped twice; keep the bigger one
+const DUPLICATE_RADIUS_KM = 2
 
 const tierFor = (pop, isCapital) => {
   if (isCapital || pop >= 400_000) return 1
@@ -147,76 +69,137 @@ const haversineKm = (a, b) => {
   return 2 * R * Math.asin(Math.sqrt(h))
 }
 
-const input = process.argv[2]
-if (!input) {
-  console.error('Usage: node scripts/build_cities.mjs path/to/cities15000.txt')
-  process.exit(1)
+// Names must be in Latin script for the UI and the search
+const LATIN = /^[\p{Script=Latin}\p{N}\s\-.'’()/]+$/u
+const latin = (s) => (s && LATIN.test(s) ? s.trim() : null)
+
+// "12 345", "12.345" or "~12345" -> 12345
+const parsePopulation = (value) => Number(String(value || '').replace(/[^0-9]/g, '')) || 0
+
+// Display name: the local name ("Kraków", "Braunschweig"), but the English one for the biggest
+// places where English really differs ("Warsaw", "Munich"), and for Cyrillic-script countries
+function displayName(tags, code, tier) {
+  // Bilingual names like "Cottbus - Chóśebuz" or "Bautzen/Budyšin": the first part
+  const local = latin(tags.name)?.split(/\s*\/\s*|\s+-\s+/)[0].trim()
+  const english = latin(tags['name:en'])
+  if (local && !CYRILLIC_COUNTRIES.has(code)) {
+    return english && tier === 1 && slug(english) !== slug(local) ? english : local
+  }
+  return english || local || latin(tags['name:pl'])
 }
 
-const rows = readFileSync(input, 'utf8')
-  .split('\n')
-  .filter(Boolean)
-  .map((line) => line.split('\t'))
-  .filter((f) => COUNTRIES[f[8]] && f[7] !== 'PPLX' && !EXCLUDE.has(f[1]))
-  .map((f) => ({
-    rawName: f[1],
-    ascii: f[2],
-    lat: Number(f[4]),
-    lng: Number(f[5]),
-    featureCode: f[7],
-    code: f[8],
-    pop: Number(f[14]) || 0,
-  }))
-  .sort((a, b) => b.pop - a.pop)
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
-// The app refers to cities by name, so names must be unique: keep the biggest of any duplicates
-const displayName = (r) => NAME_OVERRIDES[r.rawName] || r.rawName
+async function download(code) {
+  const query = `[out:json][timeout:180];area["ISO3166-1"="${code}"][admin_level=2]->.a;node["place"~"^(city|town)$"](area.a);out body;`
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const response = await fetch(OVERPASS_URL, {
+      method: 'POST',
+      headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ data: query }),
+    })
+    if (response.ok) return (await response.json()).elements
+    console.log(`  ${code}: Overpass answered ${response.status}, retrying in 20 s`)
+    await sleep(20_000)
+  }
+  throw new Error(`Overpass failed for ${code}`)
+}
+
+// OSM nodes for one country, from the cache or from Overpass
+async function placesOf(code) {
+  const file = join(CACHE_DIR, `${code}.json`)
+  if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8')).elements
+  console.log(`downloading ${COUNTRIES[code]}...`)
+  const elements = await download(code)
+  mkdirSync(CACHE_DIR, { recursive: true })
+  writeFileSync(file, JSON.stringify({ elements }))
+  await sleep(5_000) // be gentle with the public server
+  return elements
+}
+
+const rows = []
+let skippedNoName = 0
+for (const code of Object.keys(COUNTRIES)) {
+  for (const node of await placesOf(code)) {
+    const tags = node.tags
+    const pop = parsePopulation(tags.population)
+    const isCity = tags.place === 'city'
+    const isCapital = tags.capital === 'yes' || tags.capital === '2'
+    // A place without a population count is ranked by type: a city as mid-size, a town as small
+    const tier = tierFor(pop || (isCity ? 50_000 : 0), isCapital)
+    const name = displayName(tags, code, tier)
+    if (!name) {
+      skippedNoName++
+      continue
+    }
+    rows.push({
+      osmId: node.id,
+      name,
+      code,
+      lat: node.lat,
+      lng: node.lon,
+      pop,
+      tier,
+      isCity,
+      isCapital,
+      // Other names people may type: local, English and Polish (exonyms like Lwów or Drezno)
+      names: [tags.name, tags['name:en'], tags['name:pl'], ...(LEGACY_NAMES[node.id] || [])]
+        .map(latin)
+        .filter(Boolean),
+    })
+  }
+}
+
+// Biggest first; places without a population count go after those with one (cities before towns)
+rows.sort((a, b) => b.pop - a.pop || Number(b.isCity) - Number(a.isCity))
+
+// The app refers to places by name, so names must be unique: keep the biggest of any duplicates
 const kept = []
 const keptNames = new Set()
+let duplicates = 0
 for (const r of rows) {
-  if (keptNames.has(displayName(r))) continue
-  if (kept.some((k) => haversineKm(k, r) < mergeRadiusKm(k.pop))) continue
+  if (keptNames.has(r.name) || kept.some((k) => haversineKm(k, r) < DUPLICATE_RADIUS_KM)) {
+    duplicates++
+    continue
+  }
   kept.push(r)
-  keptNames.add(displayName(r))
+  keptNames.add(r.name)
 }
 
 const usedIds = new Set()
 const cities = kept.map((r) => {
-  const name = displayName(r)
-  let id = slug(name)
+  let id = slug(r.name)
   if (usedIds.has(id)) id = `${id}-${r.code.toLowerCase()}`
   let n = 2
-  while (usedIds.has(id)) id = `${slug(name)}-${r.code.toLowerCase()}-${n++}`
+  while (usedIds.has(id)) id = `${slug(r.name)}-${r.code.toLowerCase()}-${n++}`
   usedIds.add(id)
 
-  const isCapital = r.featureCode === 'PPLC'
-  const alt = new Set([...(ALIASES[id] || [])])
-  if (r.rawName !== name) alt.add(r.rawName)
-  if (r.ascii !== name && r.ascii !== r.rawName) alt.add(r.ascii)
+  const alt = new Set(r.names)
+  alt.delete(r.name)
 
   return {
     id,
-    name,
+    name: r.name,
     country: COUNTRIES[r.code],
     code: r.code,
     lat: Math.round(r.lat * 1e4) / 1e4,
     lng: Math.round(r.lng * 1e4) / 1e4,
     pop: r.pop,
-    tier: tierFor(r.pop, isCapital),
-    isCapital,
+    tier: r.tier,
+    isCapital: r.isCapital,
     ...(alt.size ? { alt: [...alt] } : {}),
   }
 })
 
-// One city per line: diff-friendly but compact
+// One place per line: diff-friendly but compact
 const json = '[\n' + cities.map((c) => '  ' + JSON.stringify(c)).join(',\n') + '\n]\n'
 
 for (const out of ['frontend/src/data/cities.json', 'backend/app/data/cities.json']) {
   const path = resolve(ROOT, out)
   mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, json)
-  console.log(`wrote ${cities.length} cities -> ${out}`)
+  console.log(`wrote ${cities.length} places -> ${out}`)
 }
 
 const byTier = cities.reduce((acc, c) => ((acc[c.tier] = (acc[c.tier] || 0) + 1), acc), {})
-console.log('per tier:', byTier)
+console.log('per tier:', byTier, `| skipped: ${duplicates} duplicates, ${skippedNoName} without a Latin name`)

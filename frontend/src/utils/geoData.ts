@@ -1,8 +1,8 @@
 // Geographical data and utilities for Poland and its non-Russian neighbours:
 // Germany, Czechia, Slovakia, Ukraine, Belarus, Lithuania.
 //
-// City list is generated from GeoNames (cities with population >= 15k, CC-BY 4.0)
-// by scripts/build_cities.mjs. Sorted by population, biggest first.
+// The list of cities and towns is generated from OpenStreetMap (ODbL) by scripts/build_cities.mjs.
+// Sorted by population, biggest first.
 import type { LatLngBoundsExpression, LatLngTuple } from 'leaflet'
 import CITY_DATA from '../data/cities.json'
 import type { City } from '../types'

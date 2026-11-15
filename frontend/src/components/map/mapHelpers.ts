@@ -5,7 +5,6 @@ export const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 export const OSM_ATTRIBUTION = [
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   'Routes: <a href="https://project-osrm.org/">OSRM</a>',
-  'Cities: <a href="https://www.geonames.org/">GeoNames</a>',
 ].join(' · ')
 
 // Zoom level from which each tier gets a permanent text label (others show on hover)
